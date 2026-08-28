@@ -33,6 +33,7 @@ interface Project {
 }
 
 const PROJECTS: Project[] = [
+  // ... unchanged PROJECTS data ...
   {
     id: "solodev",
     name: "SOLODEV PLATFORM",
@@ -62,6 +63,7 @@ const PROJECTS: Project[] = [
       },
     ],
   },
+  // ... rest of PROJECTS
   {
     id: "solodev-ragnarok",
     name: "SOLODEV RAGNAROK",
@@ -238,6 +240,119 @@ const PROJECTS: Project[] = [
   },
 ];
 
+function WorkModal({
+  modalData,
+  modalImageIndex,
+  setModalImageIndex,
+  handleModalNext,
+  handleModalPrev,
+  handleCloseModal,
+}: {
+  modalData: {
+    project: Project;
+    initialImageIndex: number;
+  } | null;
+  modalImageIndex: number;
+  setModalImageIndex: React.Dispatch<React.SetStateAction<number>>;
+  handleModalNext: () => void;
+  handleModalPrev: () => void;
+  handleCloseModal: () => void;
+}) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted || !modalData) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-200"
+      onClick={handleCloseModal}
+    >
+      <div
+        className="relative max-w-5xl w-full bg-[#0d0d0d] border border-white/15 rounded-lg overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Modal Header */}
+        <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 bg-black/50">
+          <span className="text-xs text-[#a1a1aa] tracking-widest font-mono uppercase">
+            {modalData.project.name} — IMAGE {modalImageIndex + 1} OF{" "}
+            {modalData.project.images.length}
+          </span>
+          <div className="flex items-center space-x-3">
+            <a
+              href={modalData.project.githubUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center space-x-1.5 text-xs text-[#a1a1aa] hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1 rounded transition-colors"
+            >
+              <FiGithub className="w-3.5 h-3.5" />
+              <span>GitHub</span>
+            </a>
+            <button
+              onClick={handleCloseModal}
+              className="p-1 text-[#a1a1aa] hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Modal Image Box */}
+        <div className="relative w-full flex-1 bg-black min-h-[350px] max-h-[65vh] flex items-center justify-center p-4 group">
+          <img
+            src={modalData.project.images[modalImageIndex].url}
+            alt={`${modalData.project.name} Image ${modalImageIndex + 1}`}
+            className="max-w-full max-h-[58vh] object-contain rounded transition-all duration-300"
+          />
+
+          <button
+            onClick={handleModalPrev}
+            aria-label="Previous Photo"
+            className="absolute left-4 p-3 bg-black/60 hover:bg-black text-white rounded-full border border-white/20 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
+          >
+            <FiChevronLeft className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={handleModalNext}
+            aria-label="Next Photo"
+            className="absolute right-4 p-3 bg-black/60 hover:bg-black text-white rounded-full border border-white/20 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
+          >
+            <FiChevronRight className="w-6 h-6" />
+          </button>
+
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-2 bg-black/60 px-3 py-1.5 rounded-full border border-white/10">
+            {modalData.project.images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => setModalImageIndex(idx)}
+                className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
+                  idx === modalImageIndex
+                    ? "w-6 bg-indigo-400"
+                    : "w-1.5 bg-white/40 hover:bg-white/80"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Modal Footer Description */}
+        <div className="p-6 border-t border-white/10 bg-[#0d0d0d] space-y-2">
+          <span className="text-[10px] text-[#818cf8] tracking-widest uppercase font-bold block font-mono">
+            IMAGE DESCRIPTION
+          </span>
+          <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed">
+            {modalData.project.images[modalImageIndex].description}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Work() {
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -392,92 +507,15 @@ export default function Work() {
         </section>
       </div>
 
-      {/* Lightbox Modal Rendered Outside Pinned GSAP Container */}
-      {modalData && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-200"
-          onClick={handleCloseModal}
-        >
-          <div
-            className="relative max-w-5xl w-full bg-[#0d0d0d] border border-white/15 rounded-lg overflow-hidden flex flex-col max-h-[90vh] shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center px-6 py-4 border-b border-white/10 bg-black/50">
-              <span className="text-xs text-[#a1a1aa] tracking-widest font-mono uppercase">
-                {modalData.project.name} — IMAGE {modalImageIndex + 1} OF{" "}
-                {modalData.project.images.length}
-              </span>
-              <div className="flex items-center space-x-3">
-                <a
-                  href={modalData.project.githubUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-1.5 text-xs text-[#a1a1aa] hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1 rounded transition-colors"
-                >
-                  <FiGithub className="w-3.5 h-3.5" />
-                  <span>GitHub</span>
-                </a>
-                <button
-                  onClick={handleCloseModal}
-                  className="p-1 text-[#a1a1aa] hover:text-white rounded hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  <FiX className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Image Box */}
-            <div className="relative w-full flex-1 bg-black min-h-[350px] max-h-[65vh] flex items-center justify-center p-4 group">
-              <img
-                src={modalData.project.images[modalImageIndex].url}
-                alt={`${modalData.project.name} Image ${modalImageIndex + 1}`}
-                className="max-w-full max-h-[58vh] object-contain rounded transition-all duration-300"
-              />
-
-              <button
-                onClick={handleModalPrev}
-                aria-label="Previous Photo"
-                className="absolute left-4 p-3 bg-black/60 hover:bg-black text-white rounded-full border border-white/20 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
-              >
-                <FiChevronLeft className="w-6 h-6" />
-              </button>
-
-              <button
-                onClick={handleModalNext}
-                aria-label="Next Photo"
-                className="absolute right-4 p-3 bg-black/60 hover:bg-black text-white rounded-full border border-white/20 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
-              >
-                <FiChevronRight className="w-6 h-6" />
-              </button>
-
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-2 bg-black/60 px-3 py-1.5 rounded-full border border-white/10">
-                {modalData.project.images.map((_, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setModalImageIndex(idx)}
-                    className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
-                      idx === modalImageIndex
-                        ? "w-6 bg-indigo-400"
-                        : "w-1.5 bg-white/40 hover:bg-white/80"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            {/* Modal Footer Description */}
-            <div className="p-6 border-t border-white/10 bg-[#0d0d0d] space-y-2">
-              <span className="text-[10px] text-[#818cf8] tracking-widest uppercase font-bold block font-mono">
-                IMAGE DESCRIPTION
-              </span>
-              <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed">
-                {modalData.project.images[modalImageIndex].description}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modal Render wrapped inside mounted check */}
+      <WorkModal
+        modalData={modalData}
+        modalImageIndex={modalImageIndex}
+        setModalImageIndex={setModalImageIndex}
+        handleModalNext={handleModalNext}
+        handleModalPrev={handleModalPrev}
+        handleCloseModal={handleCloseModal}
+      />
     </>
   );
 }

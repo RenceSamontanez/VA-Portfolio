@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
@@ -33,7 +34,6 @@ interface Project {
 }
 
 const PROJECTS: Project[] = [
-  // ... unchanged PROJECTS data ...
   {
     id: "solodev",
     name: "SOLODEV PLATFORM",
@@ -63,7 +63,6 @@ const PROJECTS: Project[] = [
       },
     ],
   },
-  // ... rest of PROJECTS
   {
     id: "solodev-ragnarok",
     name: "SOLODEV RAGNAROK",
@@ -266,9 +265,9 @@ function WorkModal({
 
   if (!isMounted || !modalData) return null;
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-200"
       onClick={handleCloseModal}
     >
       <div
@@ -303,13 +302,16 @@ function WorkModal({
         {/* Modal Image Box */}
         <div className="relative w-full flex-1 bg-black min-h-[350px] max-h-[65vh] flex items-center justify-center p-4 group">
           <img
-            src={modalData.project.images[modalImageIndex].url}
+            src={modalData.project.images[modalImageIndex]?.url}
             alt={`${modalData.project.name} Image ${modalImageIndex + 1}`}
             className="max-w-full max-h-[58vh] object-contain rounded transition-all duration-300"
           />
 
           <button
-            onClick={handleModalPrev}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleModalPrev();
+            }}
             aria-label="Previous Photo"
             className="absolute left-4 p-3 bg-black/60 hover:bg-black text-white rounded-full border border-white/20 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
           >
@@ -317,18 +319,24 @@ function WorkModal({
           </button>
 
           <button
-            onClick={handleModalNext}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleModalNext();
+            }}
             aria-label="Next Photo"
             className="absolute right-4 p-3 bg-black/60 hover:bg-black text-white rounded-full border border-white/20 transition-all cursor-pointer hover:scale-110 active:scale-95 z-20"
           >
             <FiChevronRight className="w-6 h-6" />
           </button>
 
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-2 bg-black/60 px-3 py-1.5 rounded-full border border-white/10">
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-2 bg-black/60 px-3 py-1.5 rounded-full border border-white/10 z-20">
             {modalData.project.images.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setModalImageIndex(idx)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setModalImageIndex(idx);
+                }}
                 className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
                   idx === modalImageIndex
                     ? "w-6 bg-indigo-400"
@@ -345,11 +353,12 @@ function WorkModal({
             IMAGE DESCRIPTION
           </span>
           <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed">
-            {modalData.project.images[modalImageIndex].description}
+            {modalData.project.images[modalImageIndex]?.description}
           </p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -461,7 +470,7 @@ export default function Work() {
           <div className="w-full flex justify-between items-center px-6 sm:px-12 py-6 z-30 bg-gradient-to-b from-black via-black/80 to-transparent">
             <div className="flex items-center space-x-3">
               <span className="text-xs text-[#a1a1aa] tracking-widest uppercase">
-                {PROJECTS[activeIndex].name} — {PROJECTS[activeIndex].category}
+                {PROJECTS[activeIndex]?.name} — {PROJECTS[activeIndex]?.category}
               </span>
             </div>
 
@@ -507,7 +516,7 @@ export default function Work() {
         </section>
       </div>
 
-      {/* Modal Render wrapped inside mounted check */}
+      {/* Modal Render via React Portal */}
       <WorkModal
         modalData={modalData}
         modalImageIndex={modalImageIndex}
@@ -577,7 +586,7 @@ function ProjectView({
 
         <div
           onClick={() => onImageClick(imageIndex)}
-          className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer pointer-events-none"
+          className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer pointer-events-auto z-10"
         >
           <div className="bg-black/70 backdrop-blur-md text-white text-xs px-4 py-2 rounded-full border border-white/20 flex items-center space-x-2">
             <FiMaximize2 className="w-3.5 h-3.5" />
@@ -585,12 +594,15 @@ function ProjectView({
           </div>
         </div>
 
-        <div className="absolute inset-x-6 bottom-6 flex justify-between items-center z-10 pointer-events-auto">
+        <div className="absolute inset-x-6 bottom-6 flex justify-between items-center z-20 pointer-events-auto">
           <div className="flex items-center space-x-2 bg-black/50 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10">
             {project.images.map((_, idx) => (
               <button
                 key={idx}
-                onClick={() => setImageIndex(idx)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setImageIndex(idx);
+                }}
                 className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
                   idx === imageIndex ? "w-8 bg-white" : "w-2 bg-white/30"
                 }`}
@@ -603,20 +615,27 @@ function ProjectView({
               href={project.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
               aria-label="GitHub Repository"
               className="p-2.5 bg-black/70 hover:bg-black text-white rounded backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95 flex items-center space-x-1"
             >
               <FiGithub className="w-5 h-5" />
             </a>
             <button
-              onClick={handlePrevImage}
+              onClick={(e) => {
+                e.stopPropagation();
+                handlePrevImage();
+              }}
               aria-label="Previous Image"
               className="p-2.5 bg-black/70 hover:bg-black text-white rounded backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95"
             >
               <FiChevronLeft className="w-5 h-5" />
             </button>
             <button
-              onClick={handleNextImage}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleNextImage();
+              }}
               aria-label="Next Image"
               className="p-2.5 bg-black/70 hover:bg-black text-white rounded backdrop-blur-md border border-white/20 transition-all cursor-pointer active:scale-95"
             >

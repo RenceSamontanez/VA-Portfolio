@@ -1,85 +1,140 @@
 import { Resend } from "resend";
-import { cookies } from "next/headers";
 
-// Provide a fallback empty string so the constructor doesn't crash during build time evaluation
-const resend = new Resend(process.env.RESEND_API_KEY || "re_placeholder_for_build");
-const RATE_LIMIT_DURATION = 3 * 60 * 60 * 1000; // 3 hours in milliseconds
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
-  // Check runtime key existence
-  if (!process.env.RESEND_API_KEY) {
-    return Response.json(
-      { error: "RESEND_API_KEY environment variable is missing." },
-      { status: 500 }
-    );
-  }
-
   try {
-    const cookieStore = await cookies();
-    const lastSentCookie = cookieStore.get("contact_rate_limit");
-
-    if (lastSentCookie) {
-      const lastSentTime = parseInt(lastSentCookie.value, 10);
-      const timeElapsed = Date.now() - lastSentTime;
-
-      if (timeElapsed < RATE_LIMIT_DURATION) {
-        const remainingMinutes = Math.ceil(
-          (RATE_LIMIT_DURATION - timeElapsed) / (1000 * 60)
-        );
-        const hours = Math.floor(remainingMinutes / 60);
-        const mins = remainingMinutes % 60;
-        const timeString = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-
-        return Response.json(
-          {
-            error: `Rate limit reached. You can only send one message every 3 hours. Please try again in ${timeString}.`,
-          },
-          { status: 429 }
-        );
-      }
-    }
-
     const { name, email, message } = await req.json();
-
-    if (!email || !message) {
-      return Response.json(
-        { error: "Email and message are required." },
-        { status: 400 }
-      );
-    }
 
     const data = await resend.emails.send({
       from: "Portfolio Contact <onboarding@resend.dev>",
-      to: [process.env.MY_EMAIL || "your_actual_email@example.com"],
-      subject: `New Portfolio Inquiry from ${name || "Anonymous"}`,
+      to: ["rencesamontanez@gmail.com"],
       replyTo: email,
+      subject: `New Portfolio Inquiry from ${name}`,
       html: `
-        <div style="font-family: monospace; background-color: #0a0a0a; color: #ffffff; padding: 20px; border-radius: 8px;">
-          <h2 style="color: #818cf8;">New Contact Form Submission</h2>
-          <p><strong>Name:</strong> ${name || "N/A"}</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <hr style="border-color: #333;" />
-          <p><strong>Message:</strong></p>
-          <p style="white-space: pre-wrap; color: #d4d4d8;">${message}</p>
-        </div>
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+                background-color: #0f172a;
+                margin: 0;
+                padding: 40px 20px;
+                color: #e2e8f0;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 12px;
+                overflow: hidden;
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+              }
+              .header {
+                background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+                padding: 24px 32px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+              }
+              .logo {
+                font-size: 24px;
+                font-weight: 800;
+                color: #ffffff;
+                letter-spacing: -0.5px;
+                margin: 0;
+              }
+              .logo span {
+                color: #38bdf8;
+              }
+              .badge {
+                background: rgba(255, 255, 255, 0.2);
+                color: #ffffff;
+                font-size: 12px;
+                padding: 4px 10px;
+                border-radius: 9999px;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+              }
+              .content {
+                padding: 32px;
+              }
+              .field-group {
+                margin-bottom: 20px;
+              }
+              .label {
+                font-size: 12px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+                color: #94a3b8;
+                margin-bottom: 6px;
+              }
+              .value {
+                font-size: 16px;
+                color: #f8fafc;
+                font-weight: 500;
+              }
+              .value a {
+                color: #60a5fa;
+                text-decoration: none;
+              }
+              .message-box {
+                background: #0f172a;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                padding: 16px;
+                margin-top: 8px;
+                color: #cbd5e1;
+                font-size: 15px;
+                line-height: 1.6;
+                white-space: pre-wrap;
+              }
+              .footer {
+                padding: 16px 32px;
+                background: #0f172a;
+                border-top: 1px solid #334155;
+                text-align: center;
+                font-size: 12px;
+                color: #64748b;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1 class="logo">Solo<span>X</span></h1>
+                <span class="badge">New Inquiry</span>
+              </div>
+              <div class="content">
+                <div class="field-group">
+                  <div class="label">Sender Name</div>
+                  <div class="value">${name}</div>
+                </div>
+                <div class="field-group">
+                  <div class="label">Email Address</div>
+                  <div class="value"><a href="mailto:${email}">${email}</a></div>
+                </div>
+                <div class="field-group">
+                  <div class="label">Message</div>
+                  <div class="message-box">${message}</div>
+                </div>
+              </div>
+              <div class="footer">
+                Sent automatically via SoloX Portfolio Contact System
+              </div>
+            </div>
+          </body>
+        </html>
       `,
     });
 
-    // Set cookie for 3 hours (10,800 seconds)
-    const response = Response.json({ success: true, data });
-    // @ts-ignore: Response may not have cookies in edge runtime, but in Node.js it does
-    response.cookies?.set?.("contact_rate_limit", Date.now().toString(), {
-      maxAge: 10800,
-      httpOnly: true,
-      path: "/",
-      sameSite: "strict",
-    });
-
-    return response;
-  } catch {
-    return Response.json(
-      { error: "Failed to send email. Please try again." },
-      { status: 500 }
-    );
+    return Response.json(data);
+  } catch (error) {
+    return Response.json({ error }, { status: 500 });
   }
 }

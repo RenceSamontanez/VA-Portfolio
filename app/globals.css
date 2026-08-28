@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
+@theme {
+  --color-void: #0a0a0d;
+  --color-obsidian: #101014;
+  --color-ash: #8a8a93;
+  --color-bone: #f5f4f2;
+  --color-violet: #7c5cfc;
+  --color-violet-dim: #4a3b8c;
+  --color-hairline: rgba(245, 244, 242, 0.08);
+
+  --font-space: var(--font-space), sans-serif;
+  --font-mono: var(--font-mono), monospace;
+  --font-sans: var(--font-sans), sans-serif;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --void: #0a0a0d;
+  --obsidian: #101014;
+  --ash: #8a8a93;
+  --bone: #f5f4f2;
+  --violet: #7c5cfc;
+  --violet-dim: #4a3b8c;
+  --hairline: rgba(245, 244, 242, 0.08);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    background-color: var(--void);
+    color: var(--bone);
+    overflow-x: hidden;
+    font-family: var(--font-sans), sans-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--obsidian);
+  border: 1px solid var(--hairline);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
 }

@@ -13,12 +13,13 @@ import {
   FiCheckCircle,
   FiPlusCircle,
   FiUser,
+  FiAlertCircle,
 } from "react-icons/fi";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 interface Testimonial {
-  id: string;
+  id: string | number;
   name: string;
   role: string;
   company: string;
@@ -44,16 +45,72 @@ export default function Testimonials() {
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  // State to track image loading errors
+  const [avatarErrorMap, setAvatarErrorMap] = useState<Record<string | number, boolean>>({});
+  const [sessionAvatarError, setSessionAvatarError] = useState(false);
 
   const fetchTestimonials = async () => {
     try {
-      const res = await fetch("/api/testimonials");
-      const data = await res.json();
-      setTestimonials(data.testimonials || []);
-      setAvgRating(data.avgRating || "5.0");
-      setTotal(data.total || 0);
-    } catch {
-      // Fallback
+      setApiError(null);
+      const res = await fetch("/api/feedback", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        let errorMessage = `Server responded with status ${res.status}`;
+        try {
+          const errJson = await res.json();
+          if (errJson?.error) errorMessage = errJson.error;
+        } catch (_) {
+          // Response was not JSON
+        }
+        console.error("Failed to fetch feedback:", errorMessage);
+        setApiError(errorMessage);
+        return;
+      }
+
+      const text = await res.text();
+      if (!text || !text.trim()) {
+        console.warn("API returned an empty response.");
+        return;
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        console.error("API did not return valid JSON. Response body received:", text);
+        return;
+      }
+
+      const rawList = Array.isArray(data) ? data : data.testimonials || [];
+
+      const mapped: Testimonial[] = rawList.map((item: any) => ({
+        id: item.id || Math.random().toString(),
+        name: item.author || item.name || "Anonymous",
+        role: item.role || "Client",
+        company: item.company || "",
+        avatar: item.avatar || "",
+        rating: Number(item.rating) || 5,
+        comment: item.content || item.comment || "",
+        date: item.created_at || "",
+      }));
+
+      setTestimonials(mapped);
+      setTotal(mapped.length);
+
+      if (mapped.length > 0) {
+        const sum = mapped.reduce((acc, curr) => acc + curr.rating, 0);
+        setAvgRating((sum / mapped.length).toFixed(1));
+      } else {
+        setAvgRating("5.0");
+      }
+    } catch (err: any) {
+      console.error("Failed to fetch feedback network error:", err);
+      setApiError(err?.message || "Network Error");
     }
   };
 
@@ -105,37 +162,49 @@ export default function Testimonials() {
     if (!session?.user) return;
 
     setSubmitting(true);
+    setApiError(null);
 
     try {
-      const res = await fetch("/api/testimonials", {
+      const payload: Record<string, any> = {
+        author: session.user.name || "Anonymous",
+        role: role.trim() || "Client",
+        rating: Number(rating) || 5,
+        content: comment.trim(),
+        avatar: session.user.image || "",
+      };
+
+      if (company.trim()) {
+        payload.company = company.trim();
+      }
+
+      const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: session.user.name,
-          role,
-          company,
-          rating,
-          comment,
-          avatar: session.user.image,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setTestimonials(data.testimonials);
-        setAvgRating(data.avgRating);
-        setTotal(data.total);
         setSubmittedSuccess(true);
         setComment("");
         setRole("");
         setCompany("");
+        await fetchTestimonials();
         setTimeout(() => {
           setSubmittedSuccess(false);
           setIsModalOpen(false);
         }, 2000);
+      } else {
+        let errorMessage = `Status ${res.status}`;
+        try {
+          const errJson = await res.json();
+          if (errJson?.error) errorMessage = errJson.error;
+        } catch (_) {}
+        console.error("Failed to submit feedback:", errorMessage);
+        setApiError(`Submission failed: ${errorMessage}`);
       }
-    } catch {
-      // Error handling
+    } catch (err: any) {
+      console.error("Failed to submit feedback", err);
+      setApiError(`Submission failed: ${err?.message || "Network error"}`);
     } finally {
       setSubmitting(false);
     }
@@ -147,7 +216,6 @@ export default function Testimonials() {
       className="relative w-full bg-[#050505] text-[#f5f5f7] font-mono py-28 px-6 sm:px-12 border-t border-white/10 overflow-hidden"
     >
       <div className="max-w-7xl mx-auto relative z-10 space-y-12">
-        
         {/* Header */}
         <div className="testimonials-header flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
           <div className="space-y-3">
@@ -171,60 +239,75 @@ export default function Testimonials() {
           </button>
         </div>
 
-        {/* Scrollable Testimonials Area showing 2 at a time */}
+        {/* Display Backend Route Error Notice if 500 fails */}
+        {apiError && (
+          <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl text-xs font-mono flex items-center space-x-3">
+            <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
+            <span>Backend API Error: {apiError}. Verify `app/api/feedback/route.ts` and Supabase keys.</span>
+          </div>
+        )}
+
+        {/* Scrollable Testimonials Area */}
         <div className="testimonials-scroll-container max-h-[460px] overflow-y-auto pr-2 space-y-8 scrollbar-thin scrollbar-thumb-[#818cf8]/40 scrollbar-track-white/5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            {testimonials.map((item) => (
-              <div
-                key={item.id}
-                className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-5 hover:border-white/20 transition-colors"
-              >
-                {/* Rating & Profile Header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1 text-[#818cf8]">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={`w-3.5 h-3.5 ${
-                          i < item.rating ? "text-[#818cf8]" : "text-white/20"
-                        }`}
+            {testimonials.map((item) => {
+              const hasValidAvatar = item.avatar && !avatarErrorMap[item.id];
+
+              return (
+                <div
+                  key={item.id}
+                  className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-5 hover:border-white/20 transition-colors"
+                >
+                  {/* Rating & Profile Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-1 text-[#818cf8]">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <FaStar
+                          key={i}
+                          className={`w-3.5 h-3.5 ${
+                            i < item.rating ? "text-[#818cf8]" : "text-white/20"
+                          }`}
+                        />
+                      ))}
+                    </div>
+
+                    {/* Profile Picture render with fallback */}
+                    {hasValidAvatar ? (
+                      <img
+                        src={item.avatar}
+                        alt={item.name}
+                        referrerPolicy="no-referrer"
+                        onError={() =>
+                          setAvatarErrorMap((prev) => ({ ...prev, [item.id]: true }))
+                        }
+                        className="w-9 h-9 rounded-full border border-white/20 object-cover"
                       />
-                    ))}
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
+                        <FiUser className="w-4 h-4" />
+                      </div>
+                    )}
                   </div>
 
-                  {/* Gmail Profile Image */}
-                  {item.avatar ? (
-                    <img
-                      src={item.avatar}
-                      alt={item.name}
-                      referrerPolicy="no-referrer"
-                      className="w-9 h-9 rounded-full border border-white/20 object-cover"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
-                      <FiUser className="w-4 h-4" />
+                  {/* Comment */}
+                  <p className="text-sm font-sans font-normal text-white leading-relaxed min-h-[60px]">
+                    &quot;{item.comment}&quot;
+                  </p>
+
+                  {/* Client Info */}
+                  <div className="space-y-0.5 font-mono text-xs border-t border-white/5 pt-3">
+                    <div className="text-[#a1a1aa] tracking-wider uppercase">
+                      {item.name} <span className="text-white/30">—</span> {item.role}
                     </div>
-                  )}
-                </div>
-
-                {/* Comment */}
-                <p className="text-sm font-sans font-normal text-white leading-relaxed min-h-[60px]">
-                  &quot;{item.comment}&quot;
-                </p>
-
-                {/* Client Info */}
-                <div className="space-y-0.5 font-mono text-xs border-t border-white/5 pt-3">
-                  <div className="text-[#a1a1aa] tracking-wider uppercase">
-                    {item.name} <span className="text-white/30">—</span> {item.role}
+                    {item.company && (
+                      <div className="text-[#818cf8] text-[11px]">
+                        {item.company}
+                      </div>
+                    )}
                   </div>
-                  {item.company && (
-                    <div className="text-[#818cf8] text-[11px]">
-                      {item.company}
-                    </div>
-                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
 
             {/* End of List CTA Card */}
             <a
@@ -245,14 +328,12 @@ export default function Testimonials() {
             </a>
           </div>
         </div>
-
       </div>
 
       {/* FEEDBACK MODAL WITH GMAIL AUTH */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
           <div className="bg-[#0a0a0d] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative font-mono">
-            
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
               <div className="flex items-center space-x-2 text-[#818cf8]">
                 <FiMessageSquare className="w-4 h-4" />
@@ -306,11 +387,12 @@ export default function Testimonials() {
                 {/* User Session Info */}
                 <div className="flex items-center justify-between bg-white/[0.03] border border-white/10 p-3 rounded-lg">
                   <div className="flex items-center space-x-3">
-                    {session.user?.image ? (
+                    {session.user?.image && !sessionAvatarError ? (
                       <img
                         src={session.user.image}
                         alt="Avatar"
                         referrerPolicy="no-referrer"
+                        onError={() => setSessionAvatarError(true)}
                         className="w-8 h-8 rounded-full border border-white/20 object-cover"
                       />
                     ) : (

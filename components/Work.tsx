@@ -25,215 +25,236 @@ interface Project {
   id: string;
   name: string;
   category: string;
-  problem: string;
-  approach: string;
+  problem: string;   // Used for "Project description"
+  approach: string;  // Used for "Skills and deliverables" or project features/overview
   role: string;
   tags: string[];
   githubUrl: string;
   images: ProjectImage[];
 }
 
+// Updated Projects
 const PROJECTS: Project[] = [
   {
-    id: "solodev",
-    name: "SOLODEV PLATFORM",
-    category: "INTELLIGENT DEV TOOLS",
+    id: "lp-furniture-shop",
+    name: "LP Furniture Shop",
+    category: "E-COMMERCE WEB SYSTEM",
     problem:
-      "Developers struggle with fragmented project tooling, slow handoffs, and manual environment setups, leading to wasted time and friction.",
+      "LP Furniture shop is a web system that offers furniture 100% made of woods, improving the business process by automating repetitive tasks and innovating AI to enhance design work. It helps future homeowners customize their house experience with luxurious furniture.",
     approach:
-      "Built a modular dev automation suite: in-browser coding, AI-powered assistants (Beru), deployment pipelines, and unified doc/asset management — all connected in a single platform.",
-    role: "Founder, Full-Stack Engineer, Product Designer",
-    tags: ["Next.js", "Node.js", "OpenAI API", "Prisma", "PostgreSQL", "TailwindCSS"],
-    githubUrl: "https://github.com/your-username/solodev-platform",
+      "Skills and deliverables:\n- Laravel\n- React Bootstrap\n- AI Chatbot\n- AI Image Generator\n- AI Content Detection",
+    role: "FULL STACK WEB SYSTEM DEVELOPER",
+    tags: [
+      "Laravel",
+      "React Bootstrap",
+      "AI Chatbot",
+      "AI Image Generator",
+      "AI Content Detection",
+    ],
+    githubUrl: "#", // replace with a real link if available
     images: [
       {
-        url: "/images/SoloDev/SoloDev.jpg",
-        description:
-          "This is the landing page of SoloDev, a self-developing platform designed to help developers stay in flow, streamline workspace setup, and automate code reviews.",
+        url: "/images/LP Furniture shop/LP1.jpg",
+        description: "Main landing page for LP Furniture Shop with a showcase of bespoke wooden furniture and seamless filtering experience.",
       },
       {
-        url: "/images/SoloDev/SoloDev1.jpg",
-        description:
-          "The interactive team workspace interface allowing real-time collaborative debugging, live terminal sessions, and automated cloud deployments.",
+        url: "/images/LP Furniture shop/LP2.jpg",
+        description: "Showcasing the AI-powered custom design suggestion tool for enhanced user personalization.",
       },
       {
-        url: "/images/SoloDev/SoloDev2.jpg",
-        description:
-          "AI Assistant (Beru) integration module providing instant code optimizations, pull request summaries, and context-aware recommendations.",
+        url: "/images/LP Furniture shop/LP3.jpg",
+        description: "Management dashboard featuring automation of admin, inventory, and business analytics.",
+      },
+      {
+        url: "/images/LP Furniture shop/LP4.jpg",
+        description: "Gallery of completed custom furniture and satisfied clients.",
       },
     ],
   },
+
   {
-    id: "solodev-ragnarok",
-    name: "SOLODEV RAGNAROK",
-    category: "GAME ARCHITECTURE",
+    id: "admin-management-system",
+    name: "Admin Management System",
+    category: "BUSINESS ADMINISTRATION SUITE",
     problem:
-      "Legacy Ragnarok servers lacked modern web integration, automated reward distribution, and real-time telemetry.",
+      "A full system management solution that includes an Inventory System, Customer Identity Verification, Chatbot AI trainer, Installment follow-up Automation, Customized AI Furniture idea handler, Monthly Revenue tracking and more.",
     approach:
-      "Engineered a full-stack game management portal with automated payment webhooks, real-time player analytics, and automated event syncing.",
-    role: "Full-Stack Architect & Game Systems Developer",
-    tags: ["Next.js", "C++", "Node.js", "Webhooks", "PostgreSQL"],
-    githubUrl: "https://github.com/your-username/solodev-ragnarok",
+      "Skills and deliverables:\n- Laravel\n- Database\n- Google Charts\n- Google Analytics\n- Machine Learning",
+    role: "FULL STACK DEVELOPER",
+    tags: [
+      "Laravel",
+      "Database",
+      "Google Charts",
+      "Google Analytics",
+      "Machine Learning",
+    ],
+    githubUrl: "#", // replace with a real link if available
     images: [
       {
-        url: "https://images.unsplash.com/photo-1542751371-adc38448a05e?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "The central dashboard displaying real-time concurrent server population analytics, economic metrics, and active player telemetry.",
+        url: "/images/LP Admin side/Admin.jpg",
+        description: "Main admin dashboard showcasing key business operations and navigation.",
       },
       {
-        url: "https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "In-game automated shop portal synced with payment webhooks for instant reward delivery without requiring server restarts.",
+        url: "/images/LP Admin side/Admin1.jpg",
+        description: "Inventory management panel detailing product tracking and stock levels.",
       },
       {
-        url: "https://images.unsplash.com/photo-1538481199705-c710c4e965fc?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "C++ engine telemetry interface handling automated event scheduling, anti-cheat detection logs, and automated database backups.",
+        url: "/images/LP Admin side/Admin2.jpg",
+        description: "Customer identity verification interface with enhanced security workflows.",
+      },
+      {
+        url: "/images/LP Admin side/Admin3.jpg",
+        description: "AI chatbot training module for custom furniture inquiries and support.",
+      },
+      {
+        url: "/images/LP Admin side/Admin4.jpg",
+        description: "Automated installment follow-up dashboard and client communication tools.",
+      },
+      {
+        url: "/images/LP Admin side/Admin5.jpg",
+        description: "Business analytics and revenue tracking with visual charts and reports.",
       },
     ],
   },
+
   {
-    id: "task-flow",
-    name: "TASK FLOW",
-    category: "PRODUCTIVITY APP",
+    id: "flow-desk",
+    name: "Flow Desk",
+    category: "ENTERPRISE SAAS",
     problem:
-      "Teams tracked work across spreadsheets and chat threads, losing visibility on ownership and critical deadlines.",
+      "FlowDesk is a unified enterprise management SaaS integrating CRM & Sales pipelines, Fulfillment Operations, Multi-warehouse Inventory tracking, and Automated Finance & Billing for high-growth teams.",
     approach:
-      "A task management engine combining structured Kanban boards with custom automation triggers and real-time usage analytics.",
-    role: "Full-stack architecture, automation engine, analytics dashboard.",
-    tags: ["Next.js", "PostgreSQL", "TailwindCSS", "Prisma"],
-    githubUrl: "https://github.com/your-username/task-flow",
+      "Skills and deliverables:\n- Next.js\n- TypeScript\n- Tailwind CSS\n- SaaS Development\n- Enterprise Systems Engineering",
+    role: "Full Stack Developer",
+    tags: [
+      "Next.js",
+      "TypeScript",
+      "Tailwind CSS",
+      "SaaS Development",
+      "Enterprise Systems Engineering",
+    ],
+    githubUrl: "#", // replace with a real link if available
     images: [
       {
-        url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Kanban workspace overview showing custom swimlanes, task status tags, and priority indicators designed for high-velocity teams.",
+        url: "/images/FlowDesk/FD.jpg",
+        description: "Main FlowDesk dashboard overview, integrating CRM, Operations, Inventory, and Financial tools in a unified workspace.",
       },
       {
-        url: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Sprint analytics overview visualizing team velocity, task completion timelines, and bottleneck metrics.",
+        url: "/images/FlowDesk/FD1.jpg",
+        description: "CRM pipeline view with detailed lead tracking and sales conversion analytics.",
       },
       {
-        url: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Automation rule editor allowing users to configure custom event triggers and webhooks without coding.",
+        url: "/images/FlowDesk/FD2.jpg",
+        description: "Inventory tracking interface, showing real-time multi-warehouse stock and restock recommendations.",
+      },
+      {
+        url: "/images/FlowDesk/FD3.jpg",
+        description: "Automated finance module featuring invoice generation and streamlined billing operations.",
+      },
+      {
+        url: "/images/FlowDesk/FD4.jpg",
+        description: "Fulfillment process panel coordinating order, shipment, and delivery tasks for enterprise teams.",
+      },
+      {
+        url: "/images/FlowDesk/FD5.jpg",
+        description: "Advanced business analytics with revenue trends, team performance metrics, and key operational KPIs.",
+      },
+      {
+        url: "/images/FlowDesk/FD6.jpg",
+        description: "User management and role permissions dashboard for secure team collaboration and SaaS administration.",
       },
     ],
   },
+
   {
-    id: "lp-furniture",
-    name: "LP FURNITURE SHOP",
-    category: "E-COMMERCE & 3D",
+    id: "lumiere-resort",
+    name: "Lumiere Resort",
+    category: "HOSPITALITY / LUXURY DIGITAL EXPERIENCE",
     problem:
-      "Traditional online shoppers struggle to visualize furniture scales and material textures prior to purchasing.",
+      "Lumière Resort is an ultra-luxury oceanfront web application and digital landing experience for high-end hospitality brands, combining scroll-driven storytelling, cinematic media, and interactive booking tools.",
     approach:
-      "Built an e-commerce platform with high-resolution image carousels, responsive checkout flows, and dynamic inventory management.",
-    role: "Lead Web Developer & E-Commerce Specialist",
-    tags: ["React", "Shopify API", "TailwindCSS", "Stripe"],
-    githubUrl: "https://github.com/your-username/lp-furniture-shop",
+      "Project Overview: The project delivers a fluid, multi-sensory user experience transitioning from cinematic video landing states through interactive service showcases to full accommodation booking workflows.\nSkills and deliverables:\n- Motion Design\n- Next.js\n- React\n- API Integration",
+    role: "Full Stack Developer",
+    tags: [
+      "Motion Design",
+      "Next.js",
+      "React",
+      "API Integration",
+    ],
+    githubUrl: "#", // replace with a real link if available
     images: [
       {
-        url: "https://images.unsplash.com/photo-1555041469-a586c61ea9bc?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Product catalog storefront displaying dynamic high-resolution material previews and responsive layout scaling.",
+        url: "/images/Lumiere Resort/LM.jpg",
+        description: "Main landing page showcasing cinematic oceanfront video, immersive transitions, and luxury resort branding.",
       },
       {
-        url: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Interactive product viewer enabling 360-degree item rotation and real-time texture customizations.",
+        url: "/images/Lumiere Resort/LM1.jpg",
+        description: "Interactive booking interface with dynamic room and amenity selection.",
       },
       {
-        url: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Streamlined single-page checkout flow connected with Stripe payment processing and automated inventory updates.",
+        url: "/images/Lumiere Resort/LM2.jpg",
+        description: "Service highlights carousel, immersing guests in the luxury experience.",
+      },
+      {
+        url: "/images/Lumiere Resort/LM3.jpg",
+        description: "Full-width gallery of accommodation interiors and ocean views.",
+      },
+      {
+        url: "/images/Lumiere Resort/LM4.jpg",
+        description: "Integrated hospitality services overview with real-time availability.",
+      },
+      {
+        url: "/images/Lumiere Resort/LM5.jpg",
+        description: "Mobile-responsive design ensuring a seamless experience on all devices.",
+      },
+      {
+        url: "/images/Lumiere Resort/LM6.jpg",
+        description: "Personalized guest dashboard for itinerary and exclusive offers.",
       },
     ],
   },
+
   {
-    id: "wisp-ai",
-    name: "WISP AI",
-    category: "ARTIFICIAL INTELLIGENCE",
+    id: "soloxmusic",
+    name: "SoloXMusic",
+    category: "MUSIC APP",
     problem:
-      "Complex LLM workflows require intuitive prompt interfaces that manage context windows without overwhelming users.",
+      "SoloXMusic is a music app that replaces conventional Android music applications, delivers a fully customizable user experience, no ads, and supports cloud browsing for music.",
     approach:
-      "Designed a light-speed AI assistant interface with context-aware auto-completion and seamless API streaming integrations.",
-    role: "AI Integration & UI/UX Engineer",
-    tags: ["Next.js", "OpenAI API", "LangChain", "Vercel AI SDK"],
-    githubUrl: "https://github.com/your-username/wisp-ai",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1677442136019-21780efad99a?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Streaming chat interface displaying contextual multi-turn conversation threads and model parameter toggles.",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Prompt playground workspace enabling custom system prompt creation, temperature adjustments, and model evaluation.",
-      },
-      {
-        url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Token usage dashboard and API latency tracking graph for monitoring real-time backend performance.",
-      },
+      "Skills and deliverables:\n- Google Cloud Platform\n- React Native\n- Tailwind UI\n- JSON\n- Multimedia Development",
+    role: "FULLSTACK DEVELOPER ( OWNER )",
+    tags: [
+      "Google Cloud Platform",
+      "React Native",
+      "Tailwind UI",
+      "JSON",
+      "Multimedia Development",
     ],
-  },
-  {
-    id: "solox-music",
-    name: "SOLOXMUSIC",
-    category: "AUDIO STREAMING",
-    problem:
-      "Independent creators lack lightweight, low-latency audio sharing environments with custom web players.",
-    approach:
-      "Developed a custom Web Audio API platform with real-time waveform visualization, playlist management, and persistent playback across page transitions.",
-    role: "Frontend Engineer & Audio UI Developer",
-    tags: ["React", "Web Audio API", "GSAP", "TailwindCSS"],
-    githubUrl: "https://github.com/your-username/soloxmusic",
+    githubUrl: "#", // replace with a real link if available
     images: [
       {
-        url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Persistent web audio player featuring dynamic canvas-rendered waveform visualizations and loss-audio playback controls.",
+        url: "/images/SoloXMusic/SXM.jfif",
+        description: "App splash screen and SoloXMusic branding.",
       },
       {
-        url: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Artist upload portal allowing creators to configure track metadata, custom album artwork, and waveform preview markers.",
+        url: "/images/SoloXMusic/SXM1.jfif",
+        description: "Home screen with cloud-based music discovery and custom playlists.",
       },
       {
-        url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Community discovery feed highlighting trending independent track releases, playlists, and live stream sessions.",
-      },
-    ],
-  },
-  {
-    id: "roblox-dragon-city",
-    name: "ROBLOX ENVIRONMENT (DRAGON CITY)",
-    category: "3D WORLD & METAVERSE",
-    problem:
-      "Massive Roblox environments often suffer performance drops due to unoptimized 3D assets and complex geometry.",
-    approach:
-      "Designed a custom-built 3D Dragon City environment with optimized level-of-detail (LOD) assets and dynamic terrain lighting.",
-    role: "3D Environment Artist & Lua Programmer",
-    tags: ["Roblox Studio", "Lua", "Blender", "3D Modeling"],
-    githubUrl: "https://github.com/your-username/roblox-dragon-city",
-    images: [
-      {
-        url: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Overview of the central Dragon City citadel architecture featuring custom lighting shaders and low-poly optimized meshes.",
+        url: "/images/SoloXMusic/SXM2.jfif",
+        description: "Music playing screen with intuitive interactive audio controls.",
       },
       {
-        url: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "Dynamic terrain rendering showpiece featuring custom Lua scripts managing day/night atmospheric transitions.",
+        url: "/images/SoloXMusic/SXM3.jfif",
+        description: "Custom theme engine allowing users to personalize their listening environment.",
       },
       {
-        url: "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=1600&auto=format&fit=crop",
-        description:
-          "In-game quest zone displaying particle effects, LOD asset streaming, and fast player traversal pathways.",
+        url: "/images/SoloXMusic/SXM4.jfif",
+        description: "Search and browse interface for exploring new tracks and albums.",
+      },
+      {
+        url: "/images/SoloXMusic/SXM5.jfif",
+        description: "User library featuring favorites, playlists, and downloaded songs.",
       },
     ],
   },
@@ -664,18 +685,18 @@ function ProjectView({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-1.5">
             <span className="text-xs text-[#a1a1aa] tracking-widest uppercase font-bold">
-              PROBLEM
+              PROJECT DESCRIPTION
             </span>
-            <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed">
+            <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed whitespace-pre-line">
               {project.problem}
             </p>
           </div>
 
           <div className="space-y-1.5">
             <span className="text-xs text-[#a1a1aa] tracking-widest uppercase font-bold">
-              APPROACH
+              SKILLS AND DELIVERABLES
             </span>
-            <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed">
+            <p className="text-xs sm:text-sm font-sans text-[#e4e4e7] font-light leading-relaxed whitespace-pre-line">
               {project.approach}
             </p>
           </div>

@@ -7,14 +7,15 @@ import { useGSAP } from "@gsap/react";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { FaStar, FaGoogle } from "react-icons/fa";
 import {
-  FiArrowRight,
   FiX,
   FiMessageSquare,
   FiCheckCircle,
-  FiPlusCircle,
+  FiPlus,
   FiUser,
   FiAlertCircle,
 } from "react-icons/fi";
+import { HiSparkles } from "react-icons/hi2";
+import { BsQuote } from "react-icons/bs";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
@@ -36,6 +37,7 @@ export default function Testimonials() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [avgRating, setAvgRating] = useState<string>("5.0");
   const [total, setTotal] = useState<number>(0);
+  const [isFetching, setIsFetching] = useState<boolean>(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [rating, setRating] = useState(5);
@@ -43,11 +45,12 @@ export default function Testimonials() {
   const [role, setRole] = useState("");
   const [company, setCompany] = useState("");
   const [comment, setComment] = useState("");
+
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittedSuccess, setSubmittedSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // State to track image loading errors
   const [avatarErrorMap, setAvatarErrorMap] = useState<Record<string | number, boolean>>({});
   const [sessionAvatarError, setSessionAvatarError] = useState(false);
 
@@ -64,25 +67,18 @@ export default function Testimonials() {
         try {
           const errJson = await res.json();
           if (errJson?.error) errorMessage = errJson.error;
-        } catch (_) {
-          // Response was not JSON
-        }
-        console.error("Failed to fetch feedback:", errorMessage);
+        } catch (_) {}
         setApiError(errorMessage);
         return;
       }
 
       const text = await res.text();
-      if (!text || !text.trim()) {
-        console.warn("API returned an empty response.");
-        return;
-      }
+      if (!text || !text.trim()) return;
 
       let data: any;
       try {
         data = JSON.parse(text);
       } catch (parseErr) {
-        console.error("API did not return valid JSON. Response body received:", text);
         return;
       }
 
@@ -109,8 +105,9 @@ export default function Testimonials() {
         setAvgRating("5.0");
       }
     } catch (err: any) {
-      console.error("Failed to fetch feedback network error:", err);
       setApiError(err?.message || "Network Error");
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -140,7 +137,7 @@ export default function Testimonials() {
       );
 
       gsap.fromTo(
-        ".testimonials-scroll-container",
+        ".testimonials-ticker-container",
         { y: 40, opacity: 0 },
         {
           y: 0,
@@ -156,6 +153,27 @@ export default function Testimonials() {
     },
     { scope: containerRef }
   );
+
+  // Standard Google Sign In (triggers normal page refresh on return)
+  const handleSignIn = async () => {
+    setIsAuthLoading(true);
+    await signIn("google");
+  };
+
+  // Sign Out guaranteed to stay on #testimonials section
+  const handleSignOut = async () => {
+    setIsAuthLoading(true);
+    await signOut({ redirect: false });
+    setIsAuthLoading(false);
+
+    if (typeof window !== "undefined") {
+      window.location.hash = "testimonials";
+      const testimonialsEl = document.getElementById("testimonials");
+      if (testimonialsEl) {
+        testimonialsEl.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,173 +217,212 @@ export default function Testimonials() {
           const errJson = await res.json();
           if (errJson?.error) errorMessage = errJson.error;
         } catch (_) {}
-        console.error("Failed to submit feedback:", errorMessage);
         setApiError(`Submission failed: ${errorMessage}`);
       }
     } catch (err: any) {
-      console.error("Failed to submit feedback", err);
       setApiError(`Submission failed: ${err?.message || "Network error"}`);
     } finally {
       setSubmitting(false);
     }
   };
 
+  const displayList =
+    testimonials.length > 0
+      ? testimonials.length < 3
+        ? [...testimonials, ...testimonials, ...testimonials, ...testimonials]
+        : [...testimonials, ...testimonials]
+      : [];
+
   return (
     <section
+      id="testimonials"
       ref={containerRef}
-      className="relative w-full bg-[#050505] text-[#f5f5f7] font-mono py-28 px-6 sm:px-12 border-t border-white/10 overflow-hidden"
+      className="relative w-full bg-[#030303] text-white py-28 px-6 sm:px-12 lg:px-20 overflow-hidden font-sans border-t border-white/10"
     >
-      <div className="max-w-7xl mx-auto relative z-10 space-y-12">
-        {/* Header */}
-        <div className="testimonials-header flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-white/10 pb-8">
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3 text-[#a1a1aa] text-xs font-mono uppercase tracking-widest">
-              <span>SOCIAL PROOF</span>
-              <span className="text-[#818cf8] font-bold">
-                ★ {avgRating} / 5.0 ({total} REVIEWS)
-              </span>
-            </div>
-            <h2 className="text-4xl sm:text-6xl font-bold tracking-tight text-white uppercase font-mono">
-              TESTIMONIALS
-            </h2>
-          </div>
+      <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center space-x-2 text-xs font-mono uppercase tracking-widest text-white hover:text-[#818cf8] transition-colors border-b border-transparent hover:border-[#818cf8] pb-1 cursor-pointer"
-          >
-            <span>LEAVE FEEDBACK</span>
-            <FiArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-
-        {/* Display Backend Route Error Notice if 500 fails */}
+      <div className="max-w-7xl mx-auto space-y-8">
         {apiError && (
           <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-4 rounded-xl text-xs font-mono flex items-center space-x-3">
             <FiAlertCircle className="w-5 h-5 flex-shrink-0" />
-            <span>Backend API Error: {apiError}. Verify `app/api/feedback/route.ts` and Supabase keys.</span>
+            <span>Backend API Notice: {apiError}.</span>
           </div>
         )}
 
-        {/* Scrollable Testimonials Area */}
-        <div className="testimonials-scroll-container max-h-[460px] overflow-y-auto pr-2 space-y-8 scrollbar-thin scrollbar-thumb-[#818cf8]/40 scrollbar-track-white/5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
-            {testimonials.map((item) => {
-              const hasValidAvatar = item.avatar && !avatarErrorMap[item.id];
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+          <div className="testimonials-header lg:col-span-5 space-y-8 z-10">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-mono font-semibold tracking-wider uppercase">
+              <HiSparkles className="w-3.5 h-3.5" />
+              <span>
+                ★ {avgRating} / 5.0 ({total} VERIFIED REVIEWS)
+              </span>
+            </div>
 
-              return (
-                <div
-                  key={item.id}
-                  className="bg-[#0a0a0d] border border-white/10 p-6 rounded-2xl space-y-5 hover:border-white/20 transition-colors"
+            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] text-white">
+              Trusted by teams who{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-white via-zinc-200 to-sky-400">
+                move fast
+              </span>
+            </h2>
+
+            <p className="text-zinc-400 text-base sm:text-lg font-light leading-relaxed max-w-lg">
+              Reduce technical friction, optimize performance, and empower your engineering workflow — engineered for scale and speed.
+            </p>
+
+            <div className="pt-2 flex flex-wrap items-center gap-4">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="group inline-flex items-center space-x-2.5 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs font-mono uppercase tracking-wider transition-all duration-300 shadow-[0_0_25px_rgba(37,99,235,0.4)] hover:shadow-[0_0_35px_rgba(37,99,235,0.6)] cursor-pointer"
+              >
+                <FiPlus className="w-4 h-4 transition-transform group-hover:rotate-90" />
+                <span>Leave Feedback</span>
+              </button>
+            </div>
+          </div>
+
+          <div className="testimonials-ticker-container lg:col-span-7 relative h-[520px] overflow-hidden group">
+            <div className="absolute top-0 inset-x-0 h-24 bg-gradient-to-b from-[#030303] via-[#030303]/80 to-transparent z-20 pointer-events-none" />
+            <div className="absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-[#030303] via-[#030303]/80 to-transparent z-20 pointer-events-none" />
+
+            {isFetching ? (
+              <div className="space-y-4 animate-pulse p-2">
+                {[1, 2, 3].map((n) => (
+                  <div
+                    key={n}
+                    className="p-6 rounded-2xl bg-neutral-900/40 border border-white/5 space-y-4"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-11 h-11 rounded-full bg-white/10" />
+                      <div className="space-y-2">
+                        <div className="h-3 w-32 bg-white/10 rounded" />
+                        <div className="h-2 w-20 bg-white/5 rounded" />
+                      </div>
+                    </div>
+                    <div className="h-3 w-full bg-white/10 rounded" />
+                    <div className="h-3 w-2/3 bg-white/5 rounded" />
+                  </div>
+                ))}
+              </div>
+            ) : displayList.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center p-8 text-center rounded-2xl bg-neutral-900/40 border border-white/10 space-y-4">
+                <p className="text-sm font-mono text-zinc-400">No testimonials yet.</p>
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="text-xs font-mono text-sky-400 hover:underline"
                 >
-                  {/* Rating & Profile Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1 text-[#818cf8]">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <FaStar
-                          key={i}
-                          className={`w-3.5 h-3.5 ${
-                            i < item.rating ? "text-[#818cf8]" : "text-white/20"
-                          }`}
-                        />
-                      ))}
-                    </div>
-
-                    {/* Profile Picture render with fallback */}
-                    {hasValidAvatar ? (
-                      <img
-                        src={item.avatar}
-                        alt={item.name}
-                        referrerPolicy="no-referrer"
-                        onError={() =>
-                          setAvatarErrorMap((prev) => ({ ...prev, [item.id]: true }))
-                        }
-                        className="w-9 h-9 rounded-full border border-white/20 object-cover"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
-                        <FiUser className="w-4 h-4" />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Comment */}
-                  <p className="text-sm font-sans font-normal text-white leading-relaxed min-h-[60px]">
-                    &quot;{item.comment}&quot;
-                  </p>
-
-                  {/* Client Info */}
-                  <div className="space-y-0.5 font-mono text-xs border-t border-white/5 pt-3">
-                    <div className="text-[#a1a1aa] tracking-wider uppercase">
-                      {item.name} <span className="text-white/30">—</span> {item.role}
-                    </div>
-                    {item.company && (
-                      <div className="text-[#818cf8] text-[11px]">
-                        {item.company}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-
-            {/* End of List CTA Card */}
-            <a
-              href="#contact"
-              className="group bg-[#0a0a0d] border-2 border-dashed border-[#818cf8]/40 hover:border-[#818cf8] p-8 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 transition-all duration-300 min-h-[220px]"
-            >
-              <div className="p-3 bg-[#818cf8]/10 rounded-full text-[#818cf8] group-hover:scale-110 transition-transform">
-                <FiPlusCircle className="w-6 h-6" />
+                  Be the first to leave feedback →
+                </button>
               </div>
-              <div className="space-y-1">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider font-mono">
-                  BE MY PARTNER NOW
-                </h3>
-                <p className="text-xs text-[#a1a1aa] font-sans max-w-xs">
-                  Ready to start a new project together? Get in touch to build something amazing.
-                </p>
+            ) : (
+              <div className="space-y-4 animate-vertical-infinite-scroll group-hover:[animation-play-state:paused]">
+                {displayList.map((item, idx) => {
+                  const hasValidAvatar = item.avatar && !avatarErrorMap[`${item.id}-${idx}`];
+
+                  return (
+                    <div
+                      key={`${item.id}-${idx}`}
+                      className="p-6 sm:p-7 rounded-2xl bg-neutral-900/60 backdrop-blur-md border border-white/10 hover:border-sky-500/40 transition-all duration-300 shadow-xl space-y-4 relative"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center space-x-3.5">
+                          {hasValidAvatar ? (
+                            <img
+                              src={item.avatar}
+                              alt={item.name}
+                              referrerPolicy="no-referrer"
+                              onError={() =>
+                                setAvatarErrorMap((prev) => ({
+                                  ...prev,
+                                  [`${item.id}-${idx}`]: true,
+                                }))
+                              }
+                              className="w-11 h-11 rounded-full object-cover border border-white/10"
+                            />
+                          ) : (
+                            <div className="w-11 h-11 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white/50">
+                              <FiUser className="w-5 h-5 text-zinc-400" />
+                            </div>
+                          )}
+
+                          <div>
+                            <h3 className="text-sm font-bold text-white tracking-wide">
+                              {item.name}
+                            </h3>
+                            <p className="text-xs text-zinc-400 font-mono">
+                              {item.role}
+                              {item.company ? `, ${item.company}` : ""}
+                            </p>
+                          </div>
+                        </div>
+
+                        <BsQuote className="w-7 h-7 text-sky-400 opacity-90 shrink-0" />
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-zinc-200 leading-relaxed font-light">
+                        &quot;{item.comment}&quot;
+                      </p>
+
+                      <div className="flex items-center space-x-1 pt-1">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <FaStar
+                            key={i}
+                            className={`w-3 h-3 ${
+                              i < item.rating ? "text-sky-400" : "text-white/20"
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </a>
+            )}
           </div>
         </div>
       </div>
 
-      {/* FEEDBACK MODAL WITH GMAIL AUTH */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-          <div className="bg-[#0a0a0d] border border-white/10 rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative font-mono">
+          <div className="bg-neutral-950 border border-white/15 rounded-2xl p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl relative font-sans">
             <div className="flex items-center justify-between border-b border-white/10 pb-4">
-              <div className="flex items-center space-x-2 text-[#818cf8]">
+              <div className="flex items-center space-x-2 text-sky-400">
                 <FiMessageSquare className="w-4 h-4" />
-                <span className="text-xs uppercase tracking-widest font-bold">
+                <span className="text-xs font-mono uppercase tracking-widest font-bold">
                   SUBMIT FEEDBACK
                 </span>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="text-[#a1a1aa] hover:text-white transition-colors cursor-pointer"
+                className="text-zinc-400 hover:text-white transition-colors cursor-pointer"
               >
                 <FiX className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Google Authorization Check */}
-            {!session ? (
-              <div className="text-center py-8 space-y-6 font-sans">
+            {isAuthLoading ? (
+              <div className="py-8 space-y-4 animate-pulse">
+                <div className="w-12 h-12 bg-white/10 rounded-full mx-auto" />
+                <div className="h-4 bg-white/10 rounded w-3/4 mx-auto" />
+                <div className="h-3 bg-white/5 rounded w-1/2 mx-auto" />
+                <div className="h-12 bg-white/10 rounded-xl w-full pt-4" />
+              </div>
+            ) : !session ? (
+              <div className="text-center py-6 space-y-6">
                 <div className="p-4 bg-white/5 rounded-full w-16 h-16 mx-auto flex items-center justify-center text-white">
-                  <FaGoogle className="w-8 h-8 text-[#818cf8]" />
+                  <FaGoogle className="w-8 h-8 text-sky-400" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-lg font-bold text-white font-mono uppercase">
                     AUTHENTICATE WITH GMAIL
                   </h3>
-                  <p className="text-xs text-[#a1a1aa] leading-relaxed max-w-xs mx-auto">
-                    To display your verified Google profile picture and name, sign in with your Gmail account.
+                  <p className="text-xs text-zinc-400 leading-relaxed max-w-xs mx-auto">
+                    Sign in with Gmail to verify your profile picture and name before submitting feedback.
                   </p>
                 </div>
                 <button
-                  onClick={() => signIn("google")}
-                  className="inline-flex items-center justify-center space-x-3 px-6 py-3.5 bg-white text-black font-mono font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-gray-200 transition-colors w-full cursor-pointer"
+                  type="button"
+                  onClick={handleSignIn}
+                  className="inline-flex items-center justify-center space-x-3 px-6 py-3.5 bg-white text-black font-mono font-bold text-xs uppercase tracking-wider rounded-xl hover:bg-zinc-200 transition-colors w-full cursor-pointer"
                 >
                   <FaGoogle className="w-4 h-4" />
                   <span>SIGN IN WITH GMAIL</span>
@@ -377,15 +434,30 @@ export default function Testimonials() {
                 <h3 className="text-lg font-bold text-white uppercase font-mono">
                   FEEDBACK PUBLISHED
                 </h3>
-                <p className="text-xs font-sans text-emerald-300">
-                  Thank you, {session.user?.name}! Your testimonial is now live.
+                <p className="text-xs text-emerald-300">
+                  Thank you, {session.user?.name}! Your testimonial is live.
                 </p>
               </div>
+            ) : submitting ? (
+              <div className="py-6 space-y-5 animate-pulse">
+                <div className="p-4 rounded-xl bg-white/5 border border-sky-500/30 space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-white/20" />
+                    <div className="space-y-1">
+                      <div className="h-3 w-24 bg-white/20 rounded" />
+                      <div className="h-2 w-16 bg-white/10 rounded" />
+                    </div>
+                  </div>
+                  <div className="h-3 w-full bg-white/15 rounded" />
+                  <div className="h-3 w-4/5 bg-white/10 rounded" />
+                </div>
+                <div className="text-center text-xs font-mono text-sky-400">
+                  PUBLISHING YOUR FEEDBACK...
+                </div>
+              </div>
             ) : (
-              /* FEEDBACK FORM */
-              <form onSubmit={handleSubmit} className="space-y-5 font-sans text-xs">
-                {/* User Session Info */}
-                <div className="flex items-center justify-between bg-white/[0.03] border border-white/10 p-3 rounded-lg">
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs">
+                <div className="flex items-center justify-between bg-white/[0.03] border border-white/10 p-3 rounded-xl">
                   <div className="flex items-center space-x-3">
                     {session.user?.image && !sessionAvatarError ? (
                       <img
@@ -404,26 +476,25 @@ export default function Testimonials() {
                       <span className="text-xs font-mono font-bold text-white block">
                         {session.user?.name}
                       </span>
-                      <span className="text-[10px] text-[#71717a] block">
+                      <span className="text-[10px] text-zinc-500 block">
                         {session.user?.email}
                       </span>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => signOut()}
+                    onClick={handleSignOut}
                     className="text-[10px] text-red-400 hover:underline font-mono cursor-pointer"
                   >
                     SIGN OUT
                   </button>
                 </div>
 
-                {/* Star Selector */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#a1a1aa] block">
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
                     YOUR RATING
                   </label>
-                  <div className="flex items-center space-x-2 text-[#818cf8]">
+                  <div className="flex items-center space-x-2 text-sky-400">
                     {Array.from({ length: 5 }).map((_, idx) => {
                       const starValue = idx + 1;
                       return (
@@ -436,10 +507,10 @@ export default function Testimonials() {
                           className="p-1 cursor-pointer focus:outline-none transition-transform hover:scale-110"
                         >
                           <FaStar
-                            className={`w-6 h-6 ${
+                            className={`w-5 h-5 ${
                               starValue <= (hoverRating || rating)
-                                ? "text-[#818cf8]"
-                                : "text-white/20"
+                                ? "text-sky-400"
+                                : "text-zinc-700"
                             }`}
                           />
                         </button>
@@ -450,20 +521,20 @@ export default function Testimonials() {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-[#a1a1aa] block">
+                    <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
                       ROLE / TITLE
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. CEO, Product Lead"
+                      placeholder="e.g. CEO, Developer"
                       value={role}
                       onChange={(e) => setRole(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-lg p-3 text-white placeholder-[#52525b] focus:outline-none focus:border-[#818cf8]"
+                      className="w-full bg-neutral-900 border border-white/10 rounded-xl p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-sky-400"
                     />
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-mono uppercase tracking-wider text-[#a1a1aa] block">
+                    <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
                       COMPANY / ORG
                     </label>
                     <input
@@ -471,14 +542,14 @@ export default function Testimonials() {
                       placeholder="e.g. Acme Inc."
                       value={company}
                       onChange={(e) => setCompany(e.target.value)}
-                      className="w-full bg-white/[0.03] border border-white/10 rounded-lg p-3 text-white placeholder-[#52525b] focus:outline-none focus:border-[#818cf8]"
+                      className="w-full bg-neutral-900 border border-white/10 rounded-xl p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-sky-400"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-mono uppercase tracking-wider text-[#a1a1aa] block">
-                    YOUR FEEDBACK
+                  <label className="text-[10px] font-mono uppercase tracking-wider text-zinc-400 block">
+                    YOUR FEEDBACK *
                   </label>
                   <textarea
                     required
@@ -486,22 +557,36 @@ export default function Testimonials() {
                     placeholder="Share your experience working together..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="w-full bg-white/[0.03] border border-white/10 rounded-lg p-3 text-white placeholder-[#52525b] focus:outline-none focus:border-[#818cf8] resize-none"
+                    className="w-full bg-neutral-900 border border-white/10 rounded-xl p-3 text-white placeholder-zinc-600 focus:outline-none focus:border-sky-400 resize-none"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-3.5 bg-[#818cf8] hover:bg-[#6366f1] text-black font-bold uppercase tracking-widest font-mono rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest font-mono rounded-xl transition-colors disabled:opacity-50 cursor-pointer shadow-[0_0_20px_rgba(37,99,235,0.4)]"
                 >
-                  {submitting ? "POSTING..." : "PUBLISH FEEDBACK"}
+                  PUBLISH FEEDBACK
                 </button>
               </form>
             )}
           </div>
         </div>
       )}
+
+      <style jsx global>{`
+        @keyframes vertical-infinite-scroll {
+          0% {
+            transform: translateY(0%);
+          }
+          100% {
+            transform: translateY(-50%);
+          }
+        }
+        .animate-vertical-infinite-scroll {
+          animation: vertical-infinite-scroll 24s linear infinite;
+        }
+      `}</style>
     </section>
   );
 }

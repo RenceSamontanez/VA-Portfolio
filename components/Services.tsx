@@ -1,188 +1,117 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import {
-  FiArrowUpRight,
-  FiCheckCircle,
-  FiShare2,
-  FiLayers,
-  FiCpu,
-  FiCode,
-  FiTerminal,
-} from "react-icons/fi";
+import { FiCheckCircle } from "react-icons/fi";
 
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-interface VisualSample {
-  type: "diagram" | "preview" | "code";
-  title: string;
-  subtitle: string;
-  diagramSteps?: { label: string; sub: string }[];
-  codeSnippet?: string;
-}
-
-interface ServiceDetail {
+// ============================================================================
+// DYNAMIC PRICING CONFIGURATION (Change pricing & features here easily)
+// ============================================================================
+export interface PricingTier {
   id: string;
-  number: string;
-  title: string;
-  shortDesc: string;
-  fullDesc: string;
-  techStack: string[];
-  deliverables: string[];
-  sample: VisualSample;
+  name: string;
+  badge?: string;
+  isPopular?: boolean;
+  prices: {
+    startup: { value: number | string; period: string };
+    enterprise: { value: number | string; period: string };
+  };
+  billingNote: string;
+  description: string;
+  includedServices: string[]; // Maps to your 5 core services
 }
 
-const SERVICES_DATA: ServiceDetail[] = [
+const PRICING_CONFIG: PricingTier[] = [
   {
-    id: "web-dev",
-    number: "01",
-    title: "WEB DEVELOPMENT",
-    shortDesc: "Full-stack applications built to be maintained for years, not just demoed once.",
-    fullDesc:
-      "Engineered with modern Next.js App Router architecture, zero-friction hydration, server actions, and type-safe backend integrations designed for maximum scalability.",
-    techStack: ["Next.js", "React", "TypeScript", "Node.js", "PostgreSQL", "Prisma"],
-    deliverables: [
-      "Custom Server-Side Rendered Applications",
-      "Type-safe REST & GraphQL APIs",
-      "Database Schema & ORM Infrastructure",
-      "Edge-Deployed Infrastructure on Vercel/AWS",
-    ],
-    sample: {
-      type: "diagram",
-      title: "APPLICATION ARCHITECTURE PIPELINE",
-      subtitle: "High-concurrency data flow & edge caching model",
-      diagramSteps: [
-        { label: "Client Request", sub: "Edge Runtime / CDN" },
-        { label: "Server Action", sub: "Type-Safe Validation" },
-        { label: "Prisma ORM", sub: "PostgreSQL Pooling" },
-        { label: "Hydrated UI", sub: "Sub-100ms LCP" },
-      ],
+    id: "essential",
+    name: "Essential Stack",
+    prices: {
+      startup: { value: 2499, period: "per project" },
+      enterprise: { value: 4999, period: "per project" },
     },
+    billingNote: "Includes 01 Web Dev & 02 UI/UX",
+    description: "Ideal for modern websites & high-performance UI/UX interactive systems.",
+    includedServices: ["Web Development", "UI/UX Implementation"],
   },
   {
-    id: "ui-ux",
-    number: "02",
-    title: "UI/UX IMPLEMENTATION",
-    shortDesc: "Transforming design mockups into high-fps interactive digital experiences.",
-    fullDesc:
-      "Fluid scroll-driven interfaces, 3D WebGL scenes, micro-interactions, and accessibility-compliant design systems that captivate users without compromising performance.",
-    techStack: ["GSAP", "TailwindCSS", "Framer Motion", "Three.js", "Figma"],
-    deliverables: [
-      "GSAP ScrollTrigger Interactive Timelines",
-      "Design System Component Libraries",
-      "Responsive & Mobile-First Layouts",
-      "60FPS Canvas Animations & WebGL Shaders",
-    ],
-    sample: {
-      type: "diagram",
-      title: "CREATIVE ANIMATION RUNTIME",
-      subtitle: "Hardware-accelerated render pipeline",
-      diagramSteps: [
-        { label: "Figma Tokens", sub: "Tailwind Classes" },
-        { label: "GSAP Context", sub: "DOM Ref Batching" },
-        { label: "GPU Composite", sub: "Transform Offloading" },
-        { label: "Smooth 60FPS", sub: "Zero Layout Shifts" },
-      ],
+    id: "growth",
+    name: "Full-Stack + AI",
+    badge: "Most Popular",
+    isPopular: true,
+    prices: {
+      startup: { value: 4899, period: "per project" },
+      enterprise: { value: 8999, period: "per project" },
     },
+    billingNote: "Includes Services 01, 02, 03 & 04",
+    description: "Complete end-to-end web apps with AI integrations and automated workflows.",
+    includedServices: [
+      "Web Development",
+      "UI/UX Implementation",
+      "AI Integrations",
+      "Business Automation",
+    ],
   },
   {
-    id: "ai-integrations",
-    number: "03",
-    title: "AI INTEGRATIONS",
-    shortDesc: "Embedding modern LLMs and real-time streaming tools directly into web workflows.",
-    fullDesc:
-      "Custom RAG (Retrieval-Augmented Generation) systems, vector database embeddings, function calling agents, and streaming UI pipelines tailored for domain-specific automation.",
-    techStack: ["OpenAI API", "Vercel AI SDK", "LangChain", "Pinecone", "Python"],
-    deliverables: [
-      "Real-Time Streaming UI Interfaces",
-      "Custom RAG Systems on Private Knowledge Bases",
-      "Vector Embeddings & Semantic Search Tools",
-      "Autonomous AI Function-Calling Agents",
-    ],
-    sample: {
-      type: "diagram",
-      title: "RAG & VECTOR SEARCH WORKFLOW",
-      subtitle: "Contextual prompt injection & streaming response",
-      diagramSteps: [
-        { label: "User Prompt", sub: "Context Capture" },
-        { label: "Pinecone DB", sub: "Vector Embeddings" },
-        { label: "OpenAI LLM", sub: "Context Injection" },
-        { label: "Stream UI", sub: "Token Chunking" },
-      ],
+    id: "scale",
+    name: "Custom Enterprise",
+    prices: {
+      startup: { value: "Custom", period: "tailored scope" },
+      enterprise: { value: "Custom", period: "dedicated retainers" },
     },
-  },
-  {
-    id: "business-automation",
-    number: "04",
-    title: "BUSINESS AUTOMATION",
-    shortDesc: "Automated daily content pipelines, multi-platform posting, and webhook workflows.",
-    fullDesc:
-      "Eliminate repetitive tasks with custom automated pipelines—from scheduling and processing daily social media content to syncing multi-platform API webhooks in the background.",
-    techStack: ["Node.js", "Webhooks", "Redis", "Cron Jobs", "Python", "REST APIs"],
-    deliverables: [
-      "Daily Automated Social Media Posting Engines",
-      "Webhook Engine & Data Normalization",
-      "Scheduled Task Workers & Queue Processing",
-      "Multi-Service Analytics Aggregation",
+    billingNote: "Includes All 5 Core Services",
+    description: "High-throughput backend architectures, microservices, and bespoke AI engines.",
+    includedServices: [
+      "Web Development",
+      "UI/UX Implementation",
+      "AI Integrations",
+      "Business Automation",
+      "Backend Systems",
     ],
-    sample: {
-      type: "diagram",
-      title: "DAILY CONTENT AUTO-PUBLISH PIPELINE",
-      subtitle: "Autonomous daily social media scheduling & dispatch",
-      diagramSteps: [
-        { label: "Cron Schedule", sub: "Daily Trigger at 09:00" },
-        { label: "Asset Generator", sub: "AI Text/Image Assembly" },
-        { label: "Queue Worker", sub: "Redis / BullMQ Processing" },
-        { label: "API Dispatch", sub: "X, LinkedIn & YouTube" },
-      ],
-    },
-  },
-  {
-    id: "backend-systems",
-    number: "05",
-    title: "BACKEND SYSTEMS",
-    shortDesc: "Low-latency microservices, telemetry backends, and game infrastructure.",
-    fullDesc:
-      "Reliable backend services designed to process high-throughput events, WebSockets connection pools, real-time analytics streaming, and custom game server integrations.",
-    techStack: ["Node.js", "C++", "Lua", "WebSockets", "Redis", "Express"],
-    deliverables: [
-      "Real-time WebSocket Push Services",
-      "Telemetry & Event Logging Engines",
-      "Game Server State Management Portals",
-      "Microservice Distributed Architectures",
-    ],
-    sample: {
-      type: "diagram",
-      title: "REAL-TIME TELEMETRY SYSTEM",
-      subtitle: "High-throughput event streaming architecture",
-      diagramSteps: [
-        { label: "Client Telemetry", sub: "WebSocket Gateway" },
-        { label: "Redis Pub/Sub", sub: "In-Memory Queue" },
-        { label: "Worker Process", sub: "Aggregation & Audit" },
-        { label: "Dashboard", sub: "Sub-Second Updates" },
-      ],
-    },
   },
 ];
 
-export default function Services() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const detailRef = useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+// Feature matrix covering all 5 core services
+const SERVICE_FEATURE_CHECKLIST = [
+  {
+    title: "Web Development",
+    desc: "Next.js App Router, SSR applications, type-safe APIs, and edge deployment.",
+  },
+  {
+    title: "UI/UX Implementation",
+    desc: "60FPS GSAP animations, 3D Canvas WebGL, dynamic micro-interactions.",
+  },
+  {
+    title: "AI Integrations",
+    desc: "Custom RAG pipelines, OpenAI API, vector search, and streaming LLM UI.",
+  },
+  {
+    title: "Business Automation",
+    desc: "Automated social/content scheduling pipelines, Redis queues & webhooks.",
+  },
+  {
+    title: "Backend Systems",
+    desc: "Low-latency microservices, WebSocket channels, real-time event telemetry.",
+  },
+  {
+    title: "Dedicated Code Quality",
+    desc: "Maintainable TypeScript architecture, clean ORM models, and zero technical debt.",
+  },
+];
 
-  const activeService = SERVICES_DATA[selectedIndex];
+export default function Pricing() {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [planCategory, setPlanCategory] = useState<"startup" | "enterprise">("startup");
 
   useGSAP(
     () => {
       if (!containerRef.current) return;
 
-      ScrollTrigger.refresh();
-
       gsap.fromTo(
-        ".services-section-header",
+        ".pricing-header",
         { y: 30, opacity: 0 },
         {
           y: 0,
@@ -191,22 +120,39 @@ export default function Services() {
           ease: "power3.out",
           scrollTrigger: {
             trigger: containerRef.current,
-            start: "top 85%",
+            start: "top 80%",
           },
         }
       );
 
       gsap.fromTo(
-        ".services-list-container",
+        ".pricing-card",
         { y: 40, opacity: 0 },
         {
           y: 0,
           opacity: 1,
           duration: 0.8,
+          stagger: 0.15,
           ease: "power3.out",
           scrollTrigger: {
-            trigger: containerRef.current,
-            start: "top 75%",
+            trigger: ".pricing-cards-grid",
+            start: "top 80%",
+          },
+        }
+      );
+
+      gsap.fromTo(
+        ".feature-item",
+        { y: 20, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.6,
+          stagger: 0.08,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: ".features-grid",
+            start: "top 85%",
           },
         }
       );
@@ -214,208 +160,234 @@ export default function Services() {
     { scope: containerRef }
   );
 
-  // Animate right-side content when active item changes
-  const handleSelectService = (index: number) => {
-    if (index === selectedIndex) return;
-
-    if (detailRef.current) {
-      gsap.to(detailRef.current, {
-        opacity: 0,
-        y: 10,
-        duration: 0.15,
-        ease: "power2.in",
-        onComplete: () => {
-          setSelectedIndex(index);
-          gsap.to(detailRef.current, {
-            opacity: 1,
-            y: 0,
-            duration: 0.3,
-            ease: "power2.out",
-          });
-        },
-      });
-    } else {
-      setSelectedIndex(index);
-    }
-  };
-
   return (
     <section
       ref={containerRef}
-      className="relative w-full bg-[#0a0a0a] text-[#f5f5f7] font-mono py-24 px-6 sm:px-12 border-t border-white/10 overflow-hidden"
+      className="relative w-full bg-[#050508] text-[#f5f5f7] font-sans py-28 px-6 sm:px-12 border-t border-white/10 overflow-hidden"
     >
-      {/* Background Subtle Grid */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none" />
+      {/* Dynamic Cosmic Fluid Background Canvas */}
+      <CosmicFluidCanvas />
 
-      <div className="max-w-7xl mx-auto relative z-10 space-y-12">
-        {/* Top Header */}
-        <div className="services-section-header space-y-2 border-b border-white/10 pb-6">
-          <span className="text-xs text-[#818cf8] font-bold tracking-widest uppercase">
-            WHAT I CAN BUILD FOR YOU
+      <div className="max-w-6xl mx-auto relative z-10 space-y-16">
+        {/* Header Block */}
+        <div className="pricing-header text-center space-y-4 max-w-2xl mx-auto">
+          <span className="text-xs font-mono text-purple-400 font-bold tracking-widest uppercase px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full inline-block">
+            FLEXIBLE PLANS
           </span>
-          <h2 className="text-3xl sm:text-5xl font-bold tracking-tight text-white uppercase">
-            SERVICES
+          <h2 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white">
+            Simple, predictable pricing
           </h2>
+          <p className="text-sm font-mono text-zinc-400">
+            Tailored engineering options derived across all 5 key technical services.
+          </p>
+
+          {/* Startup / Enterprise Toggle Switch */}
+          <div className="pt-4 flex justify-center">
+            <div className="inline-flex items-center bg-black/60 border border-white/10 p-1 rounded-full backdrop-blur-md">
+              <button
+                onClick={() => setPlanCategory("startup")}
+                className={`px-6 py-2 rounded-full text-xs font-mono font-bold transition-all duration-300 ${
+                  planCategory === "startup"
+                    ? "bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)]"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Startup
+              </button>
+              <button
+                onClick={() => setPlanCategory("enterprise")}
+                className={`px-6 py-2 rounded-full text-xs font-mono font-bold transition-all duration-300 ${
+                  planCategory === "enterprise"
+                    ? "bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.5)]"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                Enterprise
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Split Section: Left List, Right Dynamic Detail View */}
-        <div className="services-list-container grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-          {/* Left Side: Numbered Service List */}
-          <div className="lg:col-span-5 flex flex-col divide-y divide-white/10 border-y border-white/10">
-            {SERVICES_DATA.map((service, idx) => {
-              const isSelected = selectedIndex === idx;
+        {/* 3 Pricing Cards Grid */}
+        <div className="pricing-cards-grid grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          {PRICING_CONFIG.map((tier) => {
+            const currentPrice = tier.prices[planCategory];
 
-              return (
-                <button
-                  key={service.id}
-                  onClick={() => handleSelectService(idx)}
-                  className={`group w-full py-5 px-3 flex items-center justify-between text-left transition-all duration-200 cursor-pointer ${
-                    isSelected
-                      ? "bg-white/5 border-l-2 border-[#818cf8] pl-5 text-white"
-                      : "text-[#71717a] hover:text-white hover:bg-white/[0.02]"
-                  }`}
-                >
-                  <div className="flex items-center space-x-4">
-                    <span
-                      className={`text-xs font-mono transition-colors ${
-                        isSelected ? "text-[#818cf8]" : "text-[#52525b] group-hover:text-[#a1a1aa]"
-                      }`}
-                    >
-                      {service.number}
-                    </span>
-                    <span
-                      className={`text-base sm:text-lg font-bold tracking-wider transition-colors ${
-                        isSelected ? "text-white" : "text-[#818cf8]/70 group-hover:text-white"
-                      }`}
-                    >
-                      {service.title}
-                    </span>
-                  </div>
-
-                  <FiArrowUpRight
-                    className={`w-4 h-4 transition-all duration-200 ${
-                      isSelected
-                        ? "text-[#818cf8] opacity-100 translate-x-0 translate-y-0"
-                        : "opacity-0 -translate-x-1 translate-y-1 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0"
-                    }`}
-                  />
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Right Side: Detailed Breakdown & Workflow Sample */}
-          <div className="lg:col-span-7" ref={detailRef}>
-            <div className="bg-[#0f0f11] border border-white/10 rounded-xl p-6 sm:p-8 space-y-8 shadow-2xl relative overflow-hidden">
-              {/* Top Meta Header */}
-              <div className="space-y-4 border-b border-white/10 pb-6">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#818cf8] font-mono tracking-wider">
-                    SERVICE {activeService.number} // OVERVIEW
+            return (
+              <div
+                key={tier.id}
+                className={`pricing-card relative rounded-2xl p-8 flex flex-col justify-between transition-all duration-300 backdrop-blur-xl ${
+                  tier.isPopular
+                    ? "bg-black/80 border-2 border-purple-500 shadow-[0_0_40px_rgba(168,85,247,0.25)] scale-105 z-20"
+                    : "bg-black/50 border border-white/10 hover:border-white/20 z-10"
+                }`}
+              >
+                {/* Popular Badge */}
+                {tier.badge && (
+                  <span className="absolute -top-3 right-6 text-[10px] font-mono font-bold uppercase tracking-wider px-3 py-1 bg-purple-500 text-white rounded-full shadow-lg">
+                    {tier.badge}
                   </span>
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-[#818cf8] animate-pulse" />
-                    <span className="text-[10px] text-[#a1a1aa] uppercase tracking-wider">
-                      AVAILABLE FOR HIRE
-                    </span>
-                  </div>
-                </div>
+                )}
 
-                <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                  {activeService.title}
-                </h3>
-
-                <p className="text-sm font-sans text-[#e4e4e7] font-light leading-relaxed">
-                  {activeService.shortDesc}
-                </p>
-
-                {/* Tech Stack Pills */}
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {activeService.techStack.map((tech) => (
-                    <span
-                      key={tech}
-                      className="text-[11px] px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[#a1a1aa] font-mono"
-                    >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Extended Explanation */}
-              <div className="space-y-3">
-                <h4 className="text-xs uppercase text-[#a1a1aa] tracking-widest font-bold">
-                  Description
-                </h4>
-                <p className="text-xs sm:text-sm font-sans text-[#a1a1aa] leading-relaxed font-light">
-                  {activeService.fullDesc}
-                </p>
-              </div>
-
-              {/* Sample Work Workflow Diagram */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center space-x-2">
-                  <FiShare2 className="w-4 h-4 text-[#818cf8]" />
-                  <h4 className="text-xs uppercase text-[#a1a1aa] tracking-widest font-bold">
-                    EXAMPLE WORKFLOW DIAGRAM
-                  </h4>
-                </div>
-
-                <div className="bg-[#050505] border border-white/10 rounded-lg p-5 space-y-4">
-                  <div className="border-b border-white/5 pb-2">
-                    <p className="text-xs font-bold text-white tracking-wider">
-                      {activeService.sample.title}
-                    </p>
-                    <p className="text-[11px] font-sans text-[#71717a]">
-                      {activeService.sample.subtitle}
+                <div className="space-y-6">
+                  {/* Tier Title */}
+                  <div className="space-y-1">
+                    <h3 className="text-xl font-bold text-white tracking-wide">
+                      {tier.name}
+                    </h3>
+                    <p className="text-xs font-sans text-zinc-400 font-light">
+                      {tier.description}
                     </p>
                   </div>
 
-                  {/* Dynamic Workflow Node Map */}
-                  {activeService.sample.diagramSteps && (
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative">
-                      {activeService.sample.diagramSteps.map((step, sIdx) => (
-                        <div
-                          key={sIdx}
-                          className="bg-white/[0.03] border border-white/10 rounded p-3 flex flex-col justify-between space-y-2 relative"
-                        >
-                          <span className="text-[9px] text-[#818cf8] font-bold">
-                            STEP 0{sIdx + 1}
-                          </span>
-                          <div>
-                            <p className="text-xs font-bold text-white">{step.label}</p>
-                            <p className="text-[10px] font-sans text-[#71717a]">
-                              {step.sub}
-                            </p>
-                          </div>
-                        </div>
+                  {/* Price Display */}
+                  <div className="space-y-1 py-2 border-y border-white/5">
+                    <div className="flex items-baseline space-x-1">
+                      <span className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+                        {typeof currentPrice.value === "number"
+                          ? `$${currentPrice.value.toLocaleString()}`
+                          : currentPrice.value}
+                      </span>
+                    </div>
+                    <p className="text-xs font-mono text-purple-400">
+                      {currentPrice.period}
+                    </p>
+                    <p className="text-[11px] font-mono text-zinc-500 pt-1">
+                      {tier.billingNote}
+                    </p>
+                  </div>
+
+                  {/* Services Included Checklist */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-mono uppercase text-zinc-400 tracking-wider font-bold">
+                      INCLUDED SERVICES:
+                    </span>
+                    <ul className="space-y-2">
+                      {tier.includedServices.map((svc) => (
+                        <li key={svc} className="flex items-center space-x-2 text-xs text-zinc-300">
+                          <FiCheckCircle className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                          <span>{svc}</span>
+                        </li>
                       ))}
-                    </div>
-                  )}
+                    </ul>
+                  </div>
                 </div>
-              </div>
 
-              {/* Key Deliverables Checklist */}
-              <div className="space-y-3 pt-2">
-                <h4 className="text-xs uppercase text-[#a1a1aa] tracking-widest font-bold">
-                  WHAT YOU RECEIVE
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {activeService.deliverables.map((item, dIdx) => (
-                    <div
-                      key={dIdx}
-                      className="flex items-center space-x-2.5 text-xs font-sans text-[#d4d4d8] bg-white/[0.02] p-2.5 rounded border border-white/5"
-                    >
-                      <FiCheckCircle className="w-3.5 h-3.5 text-[#818cf8] flex-shrink-0" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
+                {/* CTA Button */}
+                <div className="pt-8">
+                  <button
+                    className={`w-full py-3 px-4 rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition-all duration-300 ${
+                      tier.isPopular
+                        ? "bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_25px_rgba(168,85,247,0.4)]"
+                        : "bg-white/10 hover:bg-white/20 text-white border border-white/10"
+                    }`}
+                  >
+                    Select Plan
+                  </button>
                 </div>
               </div>
-            </div>
+            );
+          })}
+        </div>
+
+        {/* Bottom Feature Matrix Checklist (Matching Reference Grid) */}
+        <div className="features-grid border-t border-white/10 pt-16">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {SERVICE_FEATURE_CHECKLIST.map((feat, idx) => (
+              <div key={idx} className="feature-item flex items-start space-x-3">
+                <FiCheckCircle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-white font-sans">
+                    {feat.title}
+                  </h4>
+                  <p className="text-xs text-zinc-400 font-sans leading-relaxed font-light">
+                    {feat.desc}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
     </section>
+  );
+}
+
+// ============================================================================
+// COSMIC FLUID AURORA CANVAS (Generates fluid gradient waves matching photo)
+// ============================================================================
+function CosmicFluidCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    let t = 0;
+
+    const render = () => {
+      t += 0.003;
+      ctx.clearRect(0, 0, width, height);
+
+      // Render flowing liquid curves with cosmic color palette (Cyan, Indigo, Magenta, Fiery Orange)
+      const waveCount = 14;
+
+      for (let i = 0; i < waveCount; i++) {
+        ctx.beginPath();
+        ctx.lineWidth = 2 + i * 0.5;
+
+        // Dynamic multi-stop gradient for fluid cosmic effect
+        const grad = ctx.createLinearGradient(0, 0, width, height);
+        grad.addColorStop(0, `rgba(56, 189, 248, ${0.08 + (i % 3) * 0.04})`); // Electric Cyan
+        grad.addColorStop(0.3, `rgba(168, 85, 247, ${0.12 + (i % 2) * 0.05})`); // Vibrant Purple
+        grad.addColorStop(0.7, `rgba(236, 72, 153, ${0.08 + (i % 3) * 0.03})`); // Pink/Magenta
+        grad.addColorStop(1, `rgba(249, 115, 22, ${0.05 + (i % 2) * 0.03})`); // Fiery Orange
+
+        ctx.strokeStyle = grad;
+
+        for (let x = 0; x <= width; x += 30) {
+          const y =
+            height * 0.5 +
+            Math.sin(x * 0.0015 + t + i * 0.35) * (140 + i * 10) +
+            Math.cos(x * 0.003 - t * 1.2) * 80;
+
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+
+        ctx.stroke();
+      }
+
+      animId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none opacity-80 z-0"
+    />
   );
 }

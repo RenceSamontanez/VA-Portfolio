@@ -1,134 +1,81 @@
 "use client";
 
 import React from "react";
-import { FiArrowUp, FiHeart, FiCode, FiLayers } from "react-icons/fi";
-import { FaGoogle, FaReact, FaGithub } from "react-icons/fa";
-import { SiNextdotjs, SiTailwindcss, SiTypescript, SiGsap } from "react-icons/si";
+import { FiArrowRight, FiHeart } from "react-icons/fi";
 
 export default function Footer() {
-  const scrollToTop = () => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  };
-
   const navLinks = [
-    { name: "ABOUT", href: "#about" },
-    { name: "WORK", href: "#work" },
-    { name: "PROCESS", href: "#process" },
-    { name: "SERVICES", href: "#services" },
-    { name: "THOUGHTS", href: "#thoughts" },
-    { name: "TESTIMONIALS", href: "#testimonials" },
-    { name: "CONTACT", href: "#contact" },
-  ];
-
-  const credits = [
-    { name: "Next.js 14", icon: SiNextdotjs, role: "React Framework" },
-    { name: "React", icon: FaReact, role: "UI Library" },
-    { name: "TypeScript", icon: SiTypescript, role: "Language" },
-    { name: "Tailwind CSS", icon: SiTailwindcss, role: "Styling" },
-    { name: "GSAP", icon: SiGsap, role: "Animations" },
-    { name: "NextAuth.js", icon: FaGoogle, role: "Google Auth" },
+    { name: "About", href: "#about" },
+    { name: "Work", href: "#work" },
+    { name: "Process", href: "#process" },
+    { name: "Services", href: "#services" },
+    { name: "Testimonials", href: "#testimonials" },
+    { name: "Contact", href: "#contact" },
   ];
 
   return (
-    <footer className="w-full bg-[#030304] text-[#f5f5f7] font-mono border-t border-white/10 pt-20 pb-12 px-6 sm:px-12 relative overflow-hidden">
-      <div className="max-w-7xl mx-auto space-y-16 relative z-10">
-        
-        {/* TOP ROW: Large Outro Branding & Back-To-Top Button */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-white/10 pb-12">
-          <div className="space-y-4 max-w-xl">
-            <div className="flex items-center space-x-2 text-[#818cf8] text-xs uppercase tracking-widest font-bold">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#818cf8] animate-pulse" />
-              <span>END OF PAGE</span>
-            </div>
-            <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white uppercase leading-tight font-mono">
-              DESIGNED TO INSPIRE. BUILT TO PERFORM.
+    <footer className="w-full bg-[#030304] text-white font-sans border-t border-white/10 pt-20 pb-12 px-6 sm:px-12 lg:px-20 relative overflow-hidden">
+      {/* SoloX Blue Ambient Radial Glow (Right Side) */}
+      <div className="absolute bottom-0 right-0 w-[700px] h-[350px] bg-gradient-to-l from-blue-600/30 via-sky-500/15 to-transparent blur-[130px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto space-y-20 relative z-10">
+        {/* TOP SECTION: Headline, Email & Navigation */}
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-12">
+          {/* Left Side: Headline & Reach Out Email */}
+          <div className="space-y-10 max-w-2xl">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-white leading-tight">
+              Want to collaborate with me or just curious to know more?
             </h2>
-            <p className="text-xs text-[#a1a1aa] font-sans leading-relaxed">
-              Thank you for exploring my work. Whether you have a project in mind or just want to connect, feel free to reach out anytime.
-            </p>
+
+            <div className="space-y-3">
+              <span className="text-xs font-mono text-zinc-400 block tracking-widest uppercase">
+                Reach out at:
+              </span>
+              <a
+                href="mailto:rencesamontanez@gmail.com"
+                className="inline-flex items-center space-x-3 text-2xl sm:text-3xl font-semibold text-white hover:text-sky-400 transition-colors group"
+              >
+                <span>rencesamontanez@gmail.com</span>
+                <FiArrowRight className="w-7 h-7 text-sky-400 group-hover:translate-x-2 transition-transform duration-300" />
+              </a>
+            </div>
           </div>
 
-          {/* Return to Top Button */}
-          <button
-            onClick={scrollToTop}
-            className="group inline-flex items-center space-x-3 px-6 py-4 bg-white/5 border border-white/10 hover:border-[#818cf8] hover:bg-[#818cf8]/10 rounded-xl text-xs uppercase tracking-widest text-white transition-all cursor-pointer self-start md:self-end"
-          >
-            <span>BACK TO TOP</span>
-            <FiArrowUp className="w-4 h-4 text-[#818cf8] group-hover:-translate-y-1 transition-transform" />
-          </button>
-        </div>
-
-        {/* MIDDLE ROW: Footer Navbar & Technology Credits */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 border-b border-white/10 pb-16">
-          
-          {/* Footer Navigation Bar */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="flex items-center space-x-2 text-xs text-[#818cf8] uppercase tracking-widest font-bold">
-              <FiLayers className="w-4 h-4" />
-              <span>QUICK NAVIGATION</span>
-            </div>
-            <nav className="grid grid-cols-2 gap-y-3 gap-x-6">
-              {navLinks.map((link) => (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  className="text-xs text-[#a1a1aa] hover:text-white hover:translate-x-1 transition-all duration-200 tracking-wider inline-flex items-center space-x-1"
-                >
-                  <span className="text-[#818cf8]/60 text-[10px]">//</span>
-                  <span>{link.name}</span>
-                </a>
-              ))}
-            </nav>
-          </div>
-
-          {/* Acknowledggments & Built With Credits */}
-          <div className="lg:col-span-7 space-y-4">
-            <div className="flex items-center space-x-2 text-xs text-[#818cf8] uppercase tracking-widest font-bold">
-              <FiCode className="w-4 h-4" />
-              <span>STACK ACKNOWLEDGMENTS & CREDITS</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {credits.map((item) => (
-                <div
-                  key={item.name}
-                  className="bg-white/[0.02] border border-white/5 hover:border-white/15 p-3 rounded-lg flex items-center space-x-3 transition-colors"
-                >
-                  <item.icon className="w-4 h-4 text-[#818cf8] shrink-0" />
-                  <div className="overflow-hidden">
-                    <span className="text-xs font-bold text-white block truncate">
-                      {item.name}
-                    </span>
-                    <span className="text-[10px] text-[#71717a] block truncate">
-                      {item.role}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+          {/* Right Side: Horizontal Navigation Links */}
+          <div className="flex flex-wrap gap-x-8 gap-y-4 pt-2">
+            {navLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                className="text-sm font-medium text-zinc-300 hover:text-white transition-colors"
+              >
+                {link.name}
+              </a>
+            ))}
           </div>
         </div>
 
-        {/* BOTTOM ROW: Copyright & Disclaimers */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-[#71717a]">
-          <div className="flex items-center space-x-2">
-            <span>© {new Date().getFullYear()} ALL RIGHTS RESERVED.</span>
-            <span>•</span>
-            <span className="inline-flex items-center space-x-1">
-              <span>CRAFTED WITH</span>
-              <FiHeart className="w-3 h-3 text-red-500 fill-red-500 inline" />
-            </span>
-          </div>
+        {/* BOTTOM SECTION: Giant SoloX Branding Banner with Blue Glow */}
+        <div className="relative pt-10 overflow-hidden rounded-2xl">
+          {/* Blue Gradient Mask Overlay on the Right side */}
+          <div className="absolute inset-y-0 right-0 w-2/3 bg-gradient-to-l from-blue-600/50 via-sky-500/25 to-transparent blur-3xl pointer-events-none" />
 
-          <div className="flex items-center space-x-6 font-sans text-[11px]">
-            <span className="text-[#a1a1aa]">
-              Google OAuth & Resend API used for authentication & emails.
-            </span>
+          {/* Massive SoloX Text */}
+          <div className="relative z-10">
+            <h1 className="text-[18vw] sm:text-[19vw] lg:text-[230px] font-extrabold tracking-tighter leading-none select-none bg-gradient-to-r from-zinc-700 via-zinc-300 to-sky-400 bg-clip-text text-transparent drop-shadow-[0_0_50px_rgba(56,189,248,0.25)]">
+              SoloX
+            </h1>
           </div>
         </div>
 
+        {/* SUB-FOOTER: Copyright & Credits */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-zinc-500 font-mono border-t border-white/10 pt-8">
+          <span>© {new Date().getFullYear()} SoloX. All rights reserved.</span>
+          <span className="flex items-center space-x-1.5">
+            <span>Crafted with</span>
+            <FiHeart className="w-3.5 h-3.5 text-blue-500 fill-blue-500 inline" />
+          </span>
+        </div>
       </div>
     </footer>
   );

@@ -6,7 +6,6 @@ import About from "@/components/About";
 import Work from "@/components/Work";
 import ProcessObject from "@/components/ProcessObject";
 import Services from "@/components/Services";
-import Thoughts from "@/components/Thoughts";
 import Testimonials from "@/components/Testimonials";
 import ContactForm from "@/components/ContactForm";
 import Footer from "@/components/Footer";
@@ -26,7 +25,6 @@ export default function Home() {
 
       <Services />
 
-      <Thoughts />
 
       <Testimonials />
       

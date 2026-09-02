@@ -30,8 +30,8 @@ const PRICING_CONFIG: PricingTier[] = [
     id: "essential",
     name: "Essential Stack",
     prices: {
-      startup: { value: 2499, period: "per project" },
-      enterprise: { value: 4999, period: "per project" },
+      startup: { value: 99, period: "per project" },
+      enterprise: { value: 200, period: "per project" },
     },
     billingNote: "Includes 01 Web Dev & 02 UI/UX",
     description: "Ideal for modern websites & high-performance UI/UX interactive systems.",
@@ -43,8 +43,8 @@ const PRICING_CONFIG: PricingTier[] = [
     badge: "Most Popular",
     isPopular: true,
     prices: {
-      startup: { value: 4899, period: "per project" },
-      enterprise: { value: 8999, period: "per project" },
+      startup: { value: 199, period: "per project" },
+      enterprise: { value: 400, period: "per project" },
     },
     billingNote: "Includes Services 01, 02, 03 & 04",
     description: "Complete end-to-end web apps with AI integrations and automated workflows.",

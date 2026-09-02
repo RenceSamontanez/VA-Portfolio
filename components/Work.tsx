@@ -54,6 +54,10 @@ const PROJECTS: Project[] = [
     githubUrl: "#", // replace with a real link if available
     images: [
       {
+        url: "/images/LP Furniture shop/LP.jpg",
+        description: "Showcase banner or main visual for LP Furniture Shop.",
+      },
+      {
         url: "/images/LP Furniture shop/LP1.jpg",
         description: "Main landing page for LP Furniture Shop with a showcase of bespoke wooden furniture and seamless filtering experience.",
       },

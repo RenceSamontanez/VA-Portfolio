@@ -3,15 +3,13 @@
 import { useRef, useState, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { Flip } from "gsap/Flip";
 import { useGSAP } from "@gsap/react";
 import { FiPlay, FiVolume2, FiVolumeX } from "react-icons/fi";
 
-gsap.registerPlugin(ScrollTrigger, Flip, useGSAP);
+gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 export default function Hero() {
   const [isMuted, setIsMuted] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(true);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -25,27 +23,45 @@ export default function Hero() {
   const videoOverlayRef = useRef<HTMLDivElement>(null);
   const uiElementsRef = useRef<HTMLDivElement>(null);
 
-  // Helper function to send commands to YouTube iFrame API
+  // Safe YouTube iFrame postMessage wrapper to prevent GSAP loop crashes
   const postYTCommand = (func: string, args: any[] = []) => {
-    if (iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func, args }),
-        "*"
-      );
+    try {
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func, args }),
+          "*"
+        );
+      }
+    } catch {
+      // Silently swallow iframe postMessage errors so GSAP timeline never breaks
     }
   };
 
-  // 1. Reset scroll position to top on page refresh
+  // Reset scroll position to top on page refresh
   useEffect(() => {
     if (typeof window !== "undefined") {
       window.history.scrollRestoration = "manual";
       window.scrollTo(0, 0);
     }
+
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, []);
 
   useGSAP(
     () => {
-      // 2. Initial Loading Sequence
+      // 1. Explicitly initialize starting GSAP properties
+      gsap.set(fullNameRef.current, { opacity: 1, scale: 1 });
+      gsap.set(soloxNameRef.current, { autoAlpha: 0, scale: 1, x: 0, y: 0 });
+      gsap.set(tagLineRef.current, { autoAlpha: 0, y: 20 });
+      gsap.set(portraitSectionRef.current, { autoAlpha: 0, scale: 1.1 });
+      gsap.set(videoOverlayRef.current, { autoAlpha: 0, scale: 0.9 });
+      gsap.set(uiElementsRef.current, { autoAlpha: 0 });
+
+      // 2. Initial Loading Intro Sequence
       const introTl = gsap.timeline();
 
       introTl
@@ -68,109 +84,118 @@ export default function Hero() {
         )
         .to(
           uiElementsRef.current,
-          { opacity: 1, duration: 0.8, ease: "power2.out" },
+          { autoAlpha: 1, duration: 0.8, ease: "power2.out" },
           "-=0.6"
         );
 
-      // 3. Scroll Animation Timeline
+      // 3. Main Pin Scroll Timeline
       const scrollTl = gsap.timeline({
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=4500",
+          end: "+=7000",
           scrub: 0.5,
           pin: true,
           anticipatePin: 1,
+          refreshPriority: 1,
+          invalidateOnRefresh: true,
         },
       });
 
       const soloxEl = soloxNameRef.current;
       const navTargetEl = soloxNavContainerRef.current;
-      const centerTargetEl = centerBrandContainerRef.current;
 
-      if (!soloxEl || !navTargetEl || !centerTargetEl) return;
+      if (!soloxEl || !navTargetEl) return;
+
+      const getNavOffset = () => {
+        const sRect = soloxEl.getBoundingClientRect();
+        const nRect = navTargetEl.getBoundingClientRect();
+        const currentX = (gsap.getProperty(soloxEl, "x") as number) || 0;
+        const currentY = (gsap.getProperty(soloxEl, "y") as number) || 0;
+        return {
+          x: nRect.left - (sRect.left - currentX),
+          y: nRect.top - (sRect.top - currentY),
+        };
+      };
 
       scrollTl
-        .to(fullNameRef.current, { opacity: 0, scale: 0.8, duration: 1, ease: "power2.inOut" }, "step1")
-        .to(soloxEl, { opacity: 1, scale: 1, duration: 1, ease: "power2.inOut" }, "step1")
+        // Phase A: Name -> SoloX transition
+        .to(
+          fullNameRef.current,
+          { opacity: 0, scale: 0.8, duration: 1, ease: "power2.inOut" },
+          "step1"
+        )
+        .to(
+          soloxEl,
+          { autoAlpha: 1, scale: 1, duration: 1, ease: "power2.inOut" },
+          "step1"
+        )
 
-        // Morph SoloX to Top Left
+        // Phase B: Move SoloX to Top-Left Nav
         .to(
           soloxEl,
           {
-            onStart: () => {
-              const state = Flip.getState(soloxEl);
-              navTargetEl.appendChild(soloxEl);
-              Flip.from(state, { duration: 1.5, ease: "power2.inOut", scale: true });
-            },
-            onReverseComplete: () => {
-              const state = Flip.getState(soloxEl);
-              centerTargetEl.appendChild(soloxEl);
-              Flip.from(state, { duration: 1.5, ease: "power2.inOut", scale: true });
-            },
+            x: () => getNavOffset().x,
+            y: () => getNavOffset().y,
+            scale: 0.75,
             duration: 1.5,
+            ease: "power2.inOut",
           },
           "step1+=0.5"
         )
 
-        .to(tagLineRef.current, { opacity: 1, y: 0, duration: 1 }, "-=0.5")
-        .to(tagLineRef.current, { opacity: 0, y: -20, duration: 1 })
-        .fromTo(
+        // Phase C: Tagline Reveal & Exit
+        .to(tagLineRef.current, { autoAlpha: 1, y: 0, duration: 1 }, "-=0.5")
+        .to(tagLineRef.current, { autoAlpha: 0, y: -20, duration: 1 })
+
+        // Phase D: Editorial Portrait Canvas
+        .to(portraitSectionRef.current, {
+          autoAlpha: 1,
+          scale: 1,
+          duration: 2.5,
+          ease: "power2.out",
+        })
+        .to(
           portraitSectionRef.current,
-          { opacity: 0, scale: 1.1 },
-          { opacity: 1, scale: 1, duration: 2.5, ease: "power2.out" }
-        )
-        .to(portraitSectionRef.current, { opacity: 0, scale: 0.95, duration: 1.5 })
-        
-        // Showreel Video Fade-In
-        .to(
-          videoOverlayRef.current,
           {
-            opacity: 1,
-            scale: 1,
-            duration: 2.5,
-            ease: "power2.inOut",
-            onStart: () => postYTCommand("playVideo"),
+            autoAlpha: 0,
+            scale: 0.95,
+            duration: 1.5,
           },
-          "-=0.8"
+          "+=0.5"
         )
 
-        // Fade Out Video & Decrease Volume on Scroll Away
-        .to(
-          videoOverlayRef.current,
-          {
-            scale: 0.3,
-            opacity: 0,
-            borderRadius: "24px",
-            duration: 2,
-            ease: "power2.inOut",
-            onUpdate: function () {
-              const progress = this.progress(); // Ranges from 0 to 1
-              const volume = Math.round((1 - progress) * 100);
-              postYTCommand("setVolume", [volume]);
-
-              if (progress >= 0.95) {
-                postYTCommand("pauseVideo");
-              }
-            },
-            onReverseComplete: () => {
-              postYTCommand("playVideo");
-              postYTCommand("setVolume", [100]);
-            },
-          }
-        )
-        .to(soloxEl, {
-          onStart: () => {
-            const state = Flip.getState(soloxEl);
-            centerTargetEl.appendChild(soloxEl);
-            Flip.from(state, { duration: 2, ease: "power3.inOut", scale: true });
-          },
-          onReverseComplete: () => {
-            const state = Flip.getState(soloxEl);
-            navTargetEl.appendChild(soloxEl);
-            Flip.from(state, { duration: 2, ease: "power3.inOut", scale: true });
-          },
+        // Phase E: Full-Screen Showreel Video Entrance
+        .to(videoOverlayRef.current, {
+          autoAlpha: 1,
+          scale: 1,
           duration: 2,
+          ease: "power2.inOut",
+          onStart: () => postYTCommand("playVideo"),
+          onReverseComplete: () => postYTCommand("pauseVideo"),
+        })
+
+        // Phase F: SHOWREEL HOLD (Keeps showreel pinned on screen during scroll)
+        .to({}, { duration: 6 })
+
+        // Phase G: Showreel Exit
+        .to(videoOverlayRef.current, {
+          autoAlpha: 0,
+          scale: 0.4,
+          borderRadius: "24px",
+          duration: 2,
+          ease: "power2.inOut",
+          onComplete: () => postYTCommand("pauseVideo"),
+          onReverse: () => postYTCommand("playVideo"),
+        })
+
+        // Phase H: Return SoloX back to center
+        .to(soloxEl, {
+          x: 0,
+          y: 0,
+          scale: 1,
+          duration: 2,
+          ease: "power3.inOut",
         });
     },
     { scope: containerRef }
@@ -196,12 +221,15 @@ export default function Hero() {
       {/* UI Elements Layer */}
       <div
         ref={uiElementsRef}
-        className="opacity-0 w-full h-full absolute inset-0 pointer-events-none p-6 sm:p-10 flex flex-col justify-between z-30"
+        className="w-full h-full absolute inset-0 pointer-events-none p-6 sm:p-10 flex flex-col justify-between z-30"
       >
         <div className="flex justify-between items-start w-full">
           <div className="flex flex-col items-start gap-1">
             <span className="text-xs text-ash tracking-widest">01 · HOME</span>
-            <div ref={soloxNavContainerRef} className="relative min-h-[40px] flex items-center" />
+            <div
+              ref={soloxNavContainerRef}
+              className="relative min-h-[40px] min-w-[100px] flex items-center"
+            />
           </div>
 
           <span className="text-xs text-ash">LIPA CITY, PH</span>
@@ -209,7 +237,10 @@ export default function Hero() {
 
         <div className="flex justify-between items-end w-full pointer-events-auto">
           <div className="max-w-xs space-y-1 text-xs text-ash/80 font-sans hidden sm:block">
-            <p>Full-Stack Developer, Problem Solver, and AI Integration Specialist.</p>
+            <p>
+              Full-Stack Developer, Problem Solver, and AI Integration
+              Specialist.
+            </p>
           </div>
           <div className="flex items-center space-x-6 text-xs text-bone ml-auto sm:ml-0">
             <button className="flex items-center space-x-2 hover:text-blue-300 transition-colors">
@@ -233,14 +264,14 @@ export default function Hero() {
         >
           <h1
             ref={fullNameRef}
-            className="font-space text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone text-center whitespace-nowrap opacity-0"
+            className="font-space text-2xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-bone text-center whitespace-nowrap"
           >
             RENCE PACIFICO SAMONTAÑEZ
           </h1>
 
           <div
             ref={soloxNameRef}
-            className="absolute opacity-0 font-space text-3xl sm:text-5xl font-extrabold tracking-wider whitespace-nowrap bg-gradient-to-r from-white via-blue-100 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(147,197,253,0.3)] pointer-events-auto"
+            className="absolute font-space text-3xl sm:text-5xl font-extrabold tracking-wider whitespace-nowrap bg-gradient-to-r from-white via-blue-100 to-blue-400 bg-clip-text text-transparent drop-shadow-[0_0_20px_rgba(147,197,253,0.3)] pointer-events-auto"
           >
             SoloX
           </div>
@@ -248,7 +279,7 @@ export default function Hero() {
 
         <p
           ref={tagLineRef}
-          className="opacity-0 translate-y-4 font-sans text-xs sm:text-sm text-blue-200/80 tracking-widest mt-6 uppercase text-center max-w-md font-light"
+          className="font-sans text-xs sm:text-sm text-blue-200/80 tracking-widest mt-6 uppercase text-center max-w-md font-light"
         >
           SCROLL TO EXPERIENCE & ENJOY THE PORTFOLIO JOURNEY
         </p>
@@ -257,7 +288,7 @@ export default function Hero() {
       {/* Editorial Portrait Canvas */}
       <div
         ref={portraitSectionRef}
-        className="absolute inset-0 z-10 opacity-0 pointer-events-none flex items-center justify-center"
+        className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center"
       >
         <div className="absolute inset-0 bg-gradient-to-t from-void via-transparent to-void/80 z-10" />
         <img
@@ -274,8 +305,13 @@ export default function Hero() {
           </div>
 
           <div className="max-w-xs text-[11px] sm:text-xs text-ash font-sans space-y-1 my-auto">
-            <p>CREATING DIGITAL EXPERIENCES THAT FEEL AS INTENTIONAL AS THEY LOOK.</p>
-            <p className="text-blue-200/60">WORKING ACROSS STRATEGY, IDENTITY, AND AI SYSTEMS.</p>
+            <p>
+              CREATING DIGITAL EXPERIENCES THAT FEEL AS INTENTIONAL AS THEY
+              LOOK.
+            </p>
+            <p className="text-blue-200/60">
+              WORKING ACROSS STRATEGY, IDENTITY, AND AI SYSTEMS.
+            </p>
           </div>
 
           <div className="self-end text-right max-w-lg mb-12">
@@ -286,10 +322,10 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Full-Screen Showreel Video Overlay */}
+      {/* Full-Screen Showreel Video Overlay (z-50) */}
       <div
         ref={videoOverlayRef}
-        className="absolute inset-0 bg-black z-40 opacity-0 pointer-events-none flex items-center justify-center overflow-hidden transition-all"
+        className="absolute inset-0 bg-black z-50 flex items-center justify-center overflow-hidden"
       >
         <div className="w-full h-[130%] relative flex items-center justify-center overflow-hidden pointer-events-none">
           <iframe
@@ -301,7 +337,7 @@ export default function Hero() {
           />
         </div>
 
-        {/* Fully Interactive Control Button */}
+        {/* Audio Control Button */}
         <button
           onClick={toggleMute}
           className="absolute bottom-8 left-8 bg-void/90 backdrop-blur-md px-4 py-2 border border-hairline rounded-md text-xs text-bone z-50 font-mono pointer-events-auto cursor-pointer hover:border-blue-300 transition-all flex items-center space-x-2"

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   FiCloud,
   FiVideo,
@@ -18,7 +18,6 @@ import {
   FiBarChart2,
   FiArchive,
   FiAlertTriangle,
-  FiRefreshCw,
   FiPlay,
   FiPause,
   FiZoomIn,
@@ -29,7 +28,6 @@ import {
   FiArrowRight,
   FiCheck,
   FiUserCheck,
-  FiLayers,
 } from "react-icons/fi";
 
 // ============================================================================
@@ -194,7 +192,7 @@ const NODES_DATA: Record<string, NodeDetail> = {
     icon: FiClock,
     items: ["09:00 | 13:00 | 19:00", "Target timezone synchronization", "Slot availability evaluator"],
     description:
-      "Chron engine evaluating configured daily time slots relative to client target timezones. Automatically selects the next available item in the queue for execution.",
+      "Cron engine evaluating configured daily time slots relative to client target timezones. Automatically selects the next available item in the queue for execution.",
     technicalDetails: [
       "Timezone-aware scheduling cron worker",
       "Dynamic slot allocation based on audience peak activity",
@@ -350,102 +348,133 @@ export default function ContentAutomation() {
   const [isPausedAtHuman, setIsPausedAtHuman] = useState<boolean>(false);
   const [queueItems, setQueueItems] = useState<QueueItem[]>(INITIAL_QUEUE);
 
-  const runSimulation = () => {
+  const runSimulation = useCallback(() => {
     if (isSimulating) return;
     setIsSimulating(true);
     setSimStep(0);
     setIsPausedAtHuman(false);
     setSimStatusMessage("Processing: Short-form video payload");
     setQueueItems(INITIAL_QUEUE);
-  };
+  }, [isSimulating]);
 
-  const resetSimulation = () => {
+  const resetSimulation = useCallback(() => {
     setIsSimulating(false);
     setSimStep(-1);
     setIsPausedAtHuman(false);
     setSimStatusMessage("Ready to run simulation");
     setQueueItems(INITIAL_QUEUE);
-  };
+  }, []);
 
   useEffect(() => {
     if (!isSimulating || simStep < 0) return;
 
-    let timer: ReturnType<typeof setTimeout>; // Fix: use the correct type for timer
+    let isMounted = true;
+    let primaryTimer: ReturnType<typeof setTimeout>;
+    let secondaryTimer: ReturnType<typeof setTimeout>;
 
-    if (simStep === 0) {
-      setSimStatusMessage("01 Ingesting client source content...");
-      timer = setTimeout(() => setSimStep(1), 1800);
-    } else if (simStep === 1) {
-      setSimStatusMessage("02 AI isolating viral hook candidates...");
-      timer = setTimeout(() => setSimStep(2), 1800);
-    } else if (simStep === 2) {
-      setIsPausedAtHuman(true);
-      setSimStatusMessage("03 Awaiting Human Quality Check approval...");
-      timer = setTimeout(() => {
-        setIsPausedAtHuman(false);
-        setSimStatusMessage("03 Approved — Resuming automation pipeline...");
-        setTimeout(() => setSimStep(3), 1200);
-      }, 3000);
-    } else if (simStep === 3) {
-      setSimStatusMessage("04 Executing automated payload intake...");
-      timer = setTimeout(() => setSimStep(4), 1500);
-    } else if (simStep === 4) {
-      setSimStatusMessage("05 Sanitizing video & checking MD5 hash...");
-      timer = setTimeout(() => setSimStep(5), 1500);
-    } else if (simStep === 5) {
-      setSimStatusMessage("06 Enqueueing item into Single Source of Truth...");
-      setQueueItems((prev) =>
-        prev.map((item) => (item.id === "001" ? { ...item, status: "PROCESSING" } : item))
-      );
-      timer = setTimeout(() => setSimStep(6), 1800);
-    } else if (simStep === 6) {
-      setSimStatusMessage("07 Scheduler evaluating timezone slot [09:00 ● NEXT]...");
-      timer = setTimeout(() => setSimStep(7), 1800);
-    } else if (simStep === 7) {
-      setSimStatusMessage("08 Acquiring Queue Lock & initializing Publishing Engine...");
-      timer = setTimeout(() => setSimStep(8), 1800);
-    } else if (simStep === 8) {
-      setSimStatusMessage("09 Multi-platform streaming: YouTube, Instagram & TikTok...");
-      timer = setTimeout(() => setSimStep(9), 2200);
-    } else if (simStep === 9) {
-      setSimStatusMessage("10 Aggregating publication logs & verification permalinks...");
-      timer = setTimeout(() => setSimStep(10), 1800);
-    } else if (simStep === 10) {
-      setSimStatusMessage("11 Complete! Asset archived & queue updated.");
-      setQueueItems([
-        { id: "001", title: "5 AI Tools to Automate Content", status: "POSTED", time: "09:00" },
-        { id: "002", title: "Behind the Scenes Workflow", status: "QUEUED", time: "13:00 ● NEXT" },
-        { id: "003", title: "How We Scale Social Video", status: "QUEUED", time: "19:00" },
-        { id: "004", title: "Client Case Study Breakdown", status: "QUEUED", time: "TOMORROW" },
-      ]);
-      timer = setTimeout(() => {
-        setIsSimulating(false);
-      }, 3500);
+    const stepMap: Record<
+      number,
+      {
+        message: string;
+        delay: number;
+        nextStep: number;
+        onExecute?: () => void;
+      }
+    > = {
+      0: { message: "01 Ingesting client source content...", delay: 1800, nextStep: 1 },
+      1: { message: "02 AI isolating viral hook candidates...", delay: 1800, nextStep: 2 },
+      2: { message: "03 Awaiting Human Quality Check approval...", delay: 3000, nextStep: 3 },
+      3: { message: "04 Executing automated payload intake...", delay: 1500, nextStep: 4 },
+      4: { message: "05 Sanitizing video & checking MD5 hash...", delay: 1500, nextStep: 5 },
+      5: {
+        message: "06 Enqueueing item into Single Source of Truth...",
+        delay: 1800,
+        nextStep: 6,
+        onExecute: () => {
+          setQueueItems((prev) =>
+            prev.map((item) => (item.id === "001" ? { ...item, status: "PROCESSING" } : item))
+          );
+        },
+      },
+      6: { message: "07 Scheduler evaluating timezone slot [09:00 ● NEXT]...", delay: 1800, nextStep: 7 },
+      7: { message: "08 Acquiring Queue Lock & initializing Publishing Engine...", delay: 1800, nextStep: 8 },
+      8: { message: "09 Multi-platform streaming: YouTube, Instagram & TikTok...", delay: 2200, nextStep: 9 },
+      9: { message: "10 Aggregating publication logs & verification permalinks...", delay: 1800, nextStep: 10 },
+      10: {
+        message: "11 Complete! Asset archived & queue updated.",
+        delay: 3500,
+        nextStep: -1,
+        onExecute: () => {
+          setQueueItems([
+            { id: "001", title: "5 AI Tools to Automate Content", status: "POSTED", time: "09:00" },
+            { id: "002", title: "Behind the Scenes Workflow", status: "QUEUED", time: "13:00 ● NEXT" },
+            { id: "003", title: "How We Scale Social Video", status: "QUEUED", time: "19:00" },
+            { id: "004", title: "Client Case Study Breakdown", status: "QUEUED", time: "TOMORROW" },
+          ]);
+        },
+      },
+    };
+
+    const currentConfig = stepMap[simStep];
+
+    if (currentConfig) {
+      setSimStatusMessage(currentConfig.message);
+      if (currentConfig.onExecute) {
+        currentConfig.onExecute();
+      }
+
+      if (simStep === 2) {
+        setIsPausedAtHuman(true);
+        primaryTimer = setTimeout(() => {
+          if (!isMounted) return;
+          setIsPausedAtHuman(false);
+          setSimStatusMessage("03 Approved — Resuming automation pipeline...");
+          secondaryTimer = setTimeout(() => {
+            if (isMounted) setSimStep(3);
+          }, 1200);
+        }, 1800);
+      } else {
+        primaryTimer = setTimeout(() => {
+          if (!isMounted) return;
+          if (currentConfig.nextStep === -1) {
+            setIsSimulating(false);
+          } else {
+            setSimStep(currentConfig.nextStep);
+          }
+        }, currentConfig.delay);
+      }
     }
 
-    return () => clearTimeout(timer);
+    return () => {
+      isMounted = false;
+      clearTimeout(primaryTimer);
+      clearTimeout(secondaryTimer);
+    };
   }, [isSimulating, simStep]);
 
-  const isNodeActiveInSim = (nodeId: string): boolean => {
-    if (!isSimulating || simStep < 0) return false;
-    switch (nodeId) {
-      case "01": return simStep === 0;
-      case "02": return simStep === 1;
-      case "03": return simStep === 2;
-      case "04": return simStep === 3;
-      case "05": return simStep === 4;
-      case "06": return simStep === 5;
-      case "07": return simStep === 6;
-      case "08": return simStep === 7;
-      case "09": return simStep === 7 || simStep === 8;
-      case "10":
-      case "11":
-      case "12": return simStep === 8;
-      case "13": return simStep === 9;
-      case "14": return simStep === 10;
-      default: return false;
-    }
-  };
+  const isNodeActiveInSim = useCallback(
+    (nodeId: string): boolean => {
+      if (!isSimulating || simStep < 0) return false;
+      switch (nodeId) {
+        case "01": return simStep === 0;
+        case "02": return simStep === 1;
+        case "03": return simStep === 2;
+        case "04": return simStep === 3;
+        case "05": return simStep === 4;
+        case "06": return simStep === 5;
+        case "07": return simStep === 6;
+        case "08": return simStep === 7;
+        case "09":
+        case "10":
+        case "11":
+        case "12": return simStep === 8;
+        case "13": return simStep === 9;
+        case "14": return simStep === 10;
+        default: return false;
+      }
+    },
+    [isSimulating, simStep]
+  );
 
   return (
     <section className="w-full bg-[#09090b] text-[#f5f5f7] font-sans pt-4 pb-16 px-4 sm:px-8 overflow-hidden select-none">
@@ -467,7 +496,7 @@ export default function ContentAutomation() {
           <div className="flex items-center space-x-3 w-full md:w-auto justify-center md:justify-end">
             <button
               onClick={isSimulating ? resetSimulation : runSimulation}
-              className={`flex items-center space-x-2 px-5 py-2.5 rounded-lg font-mono text-xs font-semibold transition-all shadow-lg ${
+              className={`flex items-center space-x-2 px-5 py-2.5 rounded-lg font-mono text-xs font-semibold transition-all shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
                 isSimulating
                   ? "bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30"
                   : "bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-400/30 shadow-indigo-600/20 active:scale-95"
@@ -514,23 +543,26 @@ export default function ContentAutomation() {
         </div>
         <div className="flex items-center space-x-2">
           <button
-            onClick={() => setZoomLevel((z) => Math.min(z + 0.1, 1.2))}
-            className="p-1.5 bg-[#121218] border border-white/10 rounded hover:text-white transition-colors"
+            onClick={() => setZoomLevel((z) => Math.min(Number((z + 0.1).toFixed(1)), 1.2))}
+            className="p-1.5 bg-[#121218] border border-white/10 rounded hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500"
             title="Zoom In"
+            aria-label="Zoom In"
           >
             <FiZoomIn className="w-4 h-4" />
           </button>
           <button
-            onClick={() => setZoomLevel((z) => Math.max(z - 0.1, 0.7))}
-            className="p-1.5 bg-[#121218] border border-white/10 rounded hover:text-white transition-colors"
+            onClick={() => setZoomLevel((z) => Math.max(Number((z - 0.1).toFixed(1)), 0.7))}
+            className="p-1.5 bg-[#121218] border border-white/10 rounded hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500"
             title="Zoom Out"
+            aria-label="Zoom Out"
           >
             <FiZoomOut className="w-4 h-4" />
           </button>
           <button
             onClick={() => setZoomLevel(1)}
-            className="p-1.5 bg-[#121218] border border-white/10 rounded hover:text-white transition-colors"
+            className="p-1.5 bg-[#121218] border border-white/10 rounded hover:text-white transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500"
             title="Fit View"
+            aria-label="Reset Zoom"
           >
             <FiMaximize2 className="w-4 h-4" />
           </button>
@@ -835,10 +867,18 @@ function NodeCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => onHover(node.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onClick(node)}
-      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer flex flex-col justify-between ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(node);
+        }
+      }}
+      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer flex flex-col justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
         isProminent
           ? "bg-indigo-950/20 border-indigo-500/50 shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/30"
           : "bg-[#121217] border-white/10 hover:border-white/25"
@@ -913,12 +953,20 @@ function QueueNodeCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => onHover(node.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onClick(node)}
-      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer bg-[#121217] border-emerald-500/30 hover:border-emerald-500/60 ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(node);
+        }
+      }}
+      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer bg-[#121217] border-emerald-500/30 hover:border-emerald-500/60 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
         isActive ? "ring-2 ring-emerald-400 border-emerald-400 bg-emerald-950/20 scale-[1.02]" : ""
-      }`}
+      } ${isHovered ? "-translate-y-0.5" : ""}`}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -993,12 +1041,20 @@ function SchedulerNodeCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => onHover(node.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onClick(node)}
-      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer bg-[#121217] border-white/10 hover:border-white/25 ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(node);
+        }
+      }}
+      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer bg-[#121217] border-white/10 hover:border-white/25 focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
         isActive ? "ring-2 ring-indigo-400 border-indigo-400 bg-indigo-950/20 scale-[1.02]" : ""
-      }`}
+      } ${isHovered ? "-translate-y-0.5" : ""}`}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -1016,7 +1072,13 @@ function SchedulerNodeCard({
         </div>
 
         <div className="grid grid-cols-3 gap-1.5 font-mono text-[10px] text-center">
-          <div className={`p-1.5 rounded border ${isActive ? "bg-indigo-600 text-white border-indigo-400 font-bold animate-pulse" : "bg-white/5 border-white/10 text-[#a1a1aa]"}`}>
+          <div
+            className={`p-1.5 rounded border ${
+              isActive
+                ? "bg-indigo-600 text-white border-indigo-400 font-bold animate-pulse"
+                : "bg-white/5 border-white/10 text-[#a1a1aa]"
+            }`}
+          >
             09:00 ●
           </div>
           <div className="p-1.5 rounded bg-white/5 border border-white/10 text-[#a1a1aa]">
@@ -1052,12 +1114,20 @@ function TrackerNodeCard({
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onMouseEnter={() => onHover(node.id)}
       onMouseLeave={() => onHover(null)}
       onClick={() => onClick(node)}
-      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer bg-[#121217] border-purple-500/30 hover:border-purple-500/60 ${
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick(node);
+        }
+      }}
+      className={`relative rounded-xl border p-4 transition-all duration-300 cursor-pointer bg-[#121217] border-purple-500/30 hover:border-purple-500/60 focus:outline-none focus:ring-2 focus:ring-purple-500 ${
         isActive ? "ring-2 ring-purple-400 border-purple-400 bg-purple-950/20 scale-[1.02]" : ""
-      }`}
+      } ${isHovered ? "-translate-y-0.5" : ""}`}
     >
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -1102,12 +1172,25 @@ function TrackerNodeCard({
 function NodeModal({ node, onClose }: { node: NodeDetail; onClose: () => void }) {
   const Icon = node.icon;
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
         className="relative max-w-lg w-full bg-[#121218] border border-white/20 rounded-2xl p-6 sm:p-8 space-y-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -1120,12 +1203,15 @@ function NodeModal({ node, onClose }: { node: NodeDetail; onClose: () => void })
               <span className="text-[10px] font-mono text-indigo-400 font-bold uppercase tracking-wider">
                 NODE {node.number} • {node.category}
               </span>
-              <h2 className="text-lg font-mono font-bold text-white">{node.title}</h2>
+              <h2 id="modal-title" className="text-lg font-mono font-bold text-white">
+                {node.title}
+              </h2>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 text-[#a1a1aa] hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Close Modal"
+            className="p-1.5 text-[#a1a1aa] hover:text-white rounded-lg hover:bg-white/10 transition-colors focus:outline-none focus:ring-1 focus:ring-indigo-500"
           >
             <FiX className="w-5 h-5" />
           </button>
@@ -1160,7 +1246,7 @@ function NodeModal({ node, onClose }: { node: NodeDetail; onClose: () => void })
         <div className="pt-4 border-t border-white/10 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-mono text-xs transition-colors"
+            className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-mono text-xs transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             Close Breakdown
           </button>

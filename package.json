@@ -1,6 +1,9 @@
 {
   "name": "rence-portfolio",
   "version": "0.1.0",
+  "allowScripts": {
+    "unrs-resolver": true
+  },
   "private": true,
   "scripts": {
     "dev": "next dev",
